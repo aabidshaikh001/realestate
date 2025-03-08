@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link"
-import Image from "next/image"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Mic, Building2, HomeIcon, Map, Store, ChevronRight } from "lucide-react"
@@ -52,9 +51,24 @@ const properties: Property[] = [
     bhkOptions: ["1 BHK", "2 BHK", "3 BHK"],
   },
 ]
-
+// Array of images for the banner
+const bannerImages = [
+  "https://destinationcompress.s3.ap-south-1.amazonaws.com/d939795c-e1c2-4e56-9bc5-16d7b9f6f35f.jpg",
+  "https://cbvalueaddrealty.in/wp-content/uploads/2021/07/Raffles-Park-Luxury-Villa.jpg",
+  "https://5.imimg.com/data5/SELLER/Default/2022/7/QA/GZ/BO/79515996/whatsapp-image-2022-06-25-at-2-13-17-pm-500x500.jpeg",
+];
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerImages.length)
+    }, 3000) // Change image every 3 seconds
+  
+    return () => clearInterval(interval)
+  }, [])
+
+   
 
   useEffect(() => {
     // Hide splash screen after 2.5 seconds
@@ -112,7 +126,18 @@ export default function Home() {
               transition={{ delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
             >
-              <Image src="https://luxuryproperties.in/wp-content/uploads/2019/07/Prestige-Golfshire-Villa-1.jpg" alt="Summer Vacation" fill className="object-cover" />
+              <AnimatePresence mode="wait">
+    <motion.img
+      key={bannerImages[currentIndex]}
+      src={bannerImages[currentIndex]}
+      alt="Featured Banner"
+      className="absolute inset-0 w-full h-full object-cover"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8 }}
+    />
+  </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <motion.div
                 className="absolute bottom-0 left-0 p-4 text-white"
