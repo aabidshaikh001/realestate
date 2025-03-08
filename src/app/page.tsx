@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Link from "next/link"
 import Image from "next/image"
@@ -17,7 +17,7 @@ const properties: Property[] = [
     title: "Sky Dandelions Apartment",
     location: "Luxury Apartment in Malang, Jakarta",
     price: "₹ 3.94 L - 6.01 Cr",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://5.imimg.com/data5/SELLER/Default/2023/12/366388376/JX/LT/KB/79515996/p331-villa-for-sale-in-mathukoth-kannur.jpeg",
     brokerage: "5% Brokerage",
     tag: "Best Seller",
     readyToMove: true,
@@ -30,7 +30,7 @@ const properties: Property[] = [
     title: "Green Valley Villa",
     location: "Premium Villa in Bandung, Indonesia",
     price: "₹ 5.25 L - 8.50 Cr",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://victoriarealtors.in/wp-content/uploads/2023/05/shutterstock_2066280941-1024x576.jpg",
     brokerage: "3% Brokerage",
     tag: "Premium",
     readyToMove: true,
@@ -43,7 +43,7 @@ const properties: Property[] = [
     title: "Urban Heights Condo",
     location: "Modern Condo in Surabaya, Indonesia",
     price: "₹ 2.80 L - 4.75 Cr",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "https://5.imimg.com/data5/SELLER/Default/2024/4/406385631/ZJ/XA/YH/79515996/p-00768-villa-for-sale-in-chala-kannur.jpg",
     brokerage: "4% Brokerage",
     tag: "New Launch",
     readyToMove: false,
@@ -112,7 +112,7 @@ export default function Home() {
               transition={{ delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
             >
-              <Image src="/placeholder.svg?height=192&width=384" alt="Summer Vacation" fill className="object-cover" />
+              <Image src="https://luxuryproperties.in/wp-content/uploads/2019/07/Prestige-Golfshire-Villa-1.jpg" alt="Summer Vacation" fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <motion.div
                 className="absolute bottom-0 left-0 p-4 text-white"

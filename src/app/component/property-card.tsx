@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image"
 import { Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -17,7 +19,7 @@ export interface Property {
 }
 
 interface PropertyCardProps {
-  property: Property
+    property: Property
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
