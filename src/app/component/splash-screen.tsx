@@ -18,7 +18,7 @@ export default function SplashScreen() {
         transition={{ duration: 0.5 }}
       >
         <motion.div
-          className="relative w-24 h-24 bg-blue-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
+          className="relative w-24 h-24 bg-red-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
           animate={{
             rotate: [0, 10, 0, -10, 0],
             scale: [1, 1.1, 1],
@@ -64,7 +64,7 @@ export default function SplashScreen() {
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <motion.span
-            className="text-blue-500"
+            className="text-red-500"
             animate={{
               scale: [1, 1.1, 1],
             }}
@@ -74,7 +74,7 @@ export default function SplashScreen() {
               repeatType: "reverse",
             }}
           >
-            NESTO
+            The Real Estate Company
           </motion.span>
           <motion.span
             className="text-gray-800"
@@ -88,7 +88,7 @@ export default function SplashScreen() {
               delay: 0.2,
             }}
           >
-            HUB
+            
           </motion.span>
         </motion.div>
 
@@ -110,7 +110,7 @@ export default function SplashScreen() {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-3 h-3 bg-blue-500 rounded-full"
+              className="w-3 h-3 bg-red-500 rounded-full"
               animate={{
                 scale: [1, 1.5, 1],
                 opacity: [0.7, 1, 0.7],

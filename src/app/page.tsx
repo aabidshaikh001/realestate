@@ -160,7 +160,7 @@ export default function Home() {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Link href="#" className="bg-white p-4 rounded-lg flex items-center gap-3 shadow-sm h-full">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                      <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
                         <category.icon className="h-5 w-5" />
                       </div>
                       <span className="font-medium text-sm">{category.name}</span>
@@ -174,7 +174,7 @@ export default function Home() {
             <motion.div className="px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Promoted Property</h3>
-                <Link href="#" className="text-sm text-blue-500 flex items-center">
+                <Link href="#" className="text-sm text-red-500 flex items-center">
                   View All
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>

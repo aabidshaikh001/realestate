@@ -15,17 +15,15 @@ export default function Header() {
     >
       <div className="flex items-center">
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Image src="/placeholder.svg?height=32&width=32" alt="Nestohub Logo" width={32} height={32} />
+        <Image 
+    src="/logo.png" 
+    alt="TREC Logo" 
+    width={200} 
+    height={50} 
+     style={{ filter: "brightness(0) saturate(100%) invert(50%) sepia(92%) saturate(7400%) hue-rotate(0deg)" }}
+className="object-contain filter invert-[22%] sepia-[100%] saturate-[10000%] hue-rotate-[0deg] brightness-[103%] contrast-[104%]" 
+  />
         </motion.div>
-        <motion.span
-          className="ml-2 font-bold text-xl"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <span className="text-blue-500">NESTO</span>
-          <span className="text-gray-800">HUB</span>
-        </motion.span>
       </div>
       <div className="flex gap-2">
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>

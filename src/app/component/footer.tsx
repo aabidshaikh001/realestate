@@ -25,14 +25,14 @@ export default function Footer() {
           <motion.button
             key={item.id}
             className={`flex flex-col items-center justify-center p-2 ${
-              activeTab === item.id ? "text-blue-500" : "text-gray-500"
+              activeTab === item.id ? "text-red-500" : "text-gray-500"
             }`}
             onClick={() => setActiveTab(item.id)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
             {item.id === "add" ? (
-              <div className="bg-blue-500 rounded-full p-3 -mt-5 mb-1 text-white">
+              <div className="bg-red-500 rounded-full p-3 -mt-5 mb-1 text-white">
                 <item.icon className="h-5 w-5" />
               </div>
             ) : (
@@ -41,7 +41,7 @@ export default function Footer() {
             <span className="text-xs mt-1">{item.name}</span>
             {activeTab === item.id && (
               <motion.div
-                className="absolute bottom-0 w-6 h-1 bg-blue-500 rounded-t-full"
+                className="absolute bottom-0 w-6 h-1 bg-red-500 rounded-t-full"
                 layoutId="activeTab"
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />

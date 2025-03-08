@@ -35,7 +35,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
         {/* Brokerage Tag */}
         <div className="absolute top-3 left-3">
-          <span className="bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+          <span className="bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
             {property.brokerage}
           </span>
         </div>
@@ -100,7 +100,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               <p className="text-xs text-gray-500 mt-1">{property.discount}</p>
             </div>
             <div>
-              <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">Book Visit</Button>
+              <Button className="bg-white text-red-600 border border-red-700 hover:bg-red-50">Book Visit</Button>
             </div>
           </div>
         </div>
