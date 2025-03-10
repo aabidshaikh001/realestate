@@ -4,6 +4,10 @@ import Image from "next/image"
 import { Share2, Home, Award, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+import Link from "next/link"
+
+import { motion } from "framer-motion"
+
 export interface Property {
   id: string
   title: string
@@ -22,7 +26,10 @@ interface PropertyCardProps {
   property: Property
 }
 
+
+
 export default function PropertyCard({ property }: PropertyCardProps) {
+
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 max-w-sm">
       <div className="relative">
@@ -93,8 +100,11 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               <p className="text-xs text-gray-500 mt-1">{property.discount}</p>
             </div>
             <div>
-              <Button className="bg-white text-red-600 border border-red-600 hover:bg-red-50">Book Visit</Button>
-            </div>
+            <Link href={`/property/${property.id}`}>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">Book Visit</Button>
+                </motion.div>
+              </Link>        </div>
           </div>
         </div>
 

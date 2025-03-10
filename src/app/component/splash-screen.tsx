@@ -1,7 +1,7 @@
-"use client"
+'use client'
+import { motion } from "framer-motion";
+import Image from "next/image"; // Use this if you're in a Next.js project
 
-import { motion } from "framer-motion"
-import { Building2 } from "lucide-react"
 
 export default function SplashScreen() {
   return (
@@ -17,48 +17,21 @@ export default function SplashScreen() {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.div
-          className="relative w-24 h-24 bg-red-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
-          animate={{
-            rotate: [0, 10, 0, -10, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 1.5,
-            ease: "easeInOut",
-            times: [0, 0.2, 0.5, 0.8, 1],
-            repeat: Number.POSITIVE_INFINITY,
-            repeatDelay: 1,
-          }}
-        >
-          <Building2 className="h-12 w-12 text-white" />
-          <motion.div
-            className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 1,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-          <motion.div
-            className="absolute -bottom-2 -left-2 w-4 h-4 bg-green-400 rounded-full"
-            animate={{
-              scale: [1, 1.3, 1],
-            }}
-            transition={{
-              duration: 0.8,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-              delay: 0.3,
-            }}
-          />
-        </motion.div>
+     
+          {/* Replace the icon with the logo */}
+            <Image 
+             src="/logo.png" 
+             alt="TREC Logo" 
+             width={260} 
+             height={50} 
+              style={{ filter: "brightness(0) saturate(100%) invert(50%) sepia(92%) saturate(7400%) hue-rotate(0deg)" }}
+         className="object-contain filter invert-[22%] sepia-[100%] saturate-[10000%] hue-rotate-[0deg] brightness-[103%] contrast-[104%]" 
+           />
+
+    
 
         <motion.div
-          className="text-3xl font-bold flex items-center"
+          className="text-xl font-bold flex items-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
@@ -74,21 +47,7 @@ export default function SplashScreen() {
               repeatType: "reverse",
             }}
           >
-            The Real Estate Company
-          </motion.span>
-          <motion.span
-            className="text-gray-800"
-            animate={{
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 1,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-              delay: 0.2,
-            }}
-          >
-            
+            TRECSell
           </motion.span>
         </motion.div>
 
@@ -98,7 +57,7 @@ export default function SplashScreen() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          Find your dream property
+          Smart Selling for Real Estate
         </motion.p>
 
         <motion.div
@@ -126,6 +85,5 @@ export default function SplashScreen() {
         </motion.div>
       </motion.div>
     </motion.div>
-  )
+  );
 }
-

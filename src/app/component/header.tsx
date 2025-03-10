@@ -2,7 +2,8 @@
 
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Share2, Menu } from "lucide-react"
+import { CgProfile } from "react-icons/cg";
+import { IoNotificationsCircleOutline } from "react-icons/io5";
 import { Button } from "@/components/ui/button"
 
 export default function Header() {
@@ -28,12 +29,12 @@ className="object-contain filter invert-[22%] sepia-[100%] saturate-[10000%] hue
       <div className="flex gap-2">
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
           <Button variant="ghost" size="icon">
-            <Share2 className="h-5 w-5" />
+            <IoNotificationsCircleOutline className="h-7 w-7"  />
           </Button>
         </motion.div>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
           <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
+            <CgProfile className="h-7 w-7"  />
           </Button>
         </motion.div>
       </div>
