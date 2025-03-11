@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import BookingModal from "./booking-modal"
 
+
 interface PropertyCTAProps {
   propertyId: string
 }
@@ -68,4 +69,3 @@ export default function PropertyCTA({ propertyId }: PropertyCTAProps) {
     </>
   )
 }
-

@@ -14,7 +14,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { toast } from "react-toastify"
+import { toast, ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import Image from "next/image"
 
@@ -235,6 +235,7 @@ export default function BookingModal({ isOpen, onClose, propertyId, propertyName
 
   return (
     <AnimatePresence>
+      <ToastContainer/>
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           {/* Backdrop */}
