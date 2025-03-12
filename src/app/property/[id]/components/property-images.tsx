@@ -14,11 +14,11 @@ const getDummyPropertyData = (id: string) => {
   const properties = {
     "prop-001": {
       images: [
-        "/placeholder.svg?height=400&width=800",
-        "/placeholder.svg?height=400&width=800&text=Image2",
-        "/placeholder.svg?height=400&width=800&text=Image3",
-        "/placeholder.svg?height=400&width=800&text=Image4",
-        "/placeholder.svg?height=400&width=800&text=Image5",
+        "https://www.holidify.com/images/cmsuploads/compressed/352709973_20221014181714.jpg",
+        "https://d4b28jbnqso5g.cloudfront.net/IMG_7246_HDR_c3a3ef39e3.webp",
+        "https://r1imghtlak.mmtcdn.com/07473928-9d9c-4a72-9dd8-8cb389e2d666.jpg",
+        "https://r1imghtlak.mmtcdn.com/69eedc1a-b74d-4814-9373-61eadc315c60.jpg",
+        "https://r1imghtlak.mmtcdn.com/a21193ec-c5fb-43ea-a3b0-89634189309b.jpg",
       ],
       title: "Sky Dandelions Apartment",
       brokerage: "5% Brokerage",
