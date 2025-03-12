@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { FaStore, FaUtensils, FaHospital, FaSubway, FaPlus } from "react-icons/fa"
@@ -31,18 +32,11 @@ const getDummyLocationData = (id: string) => {
     ],
   }
 
-  // Return location data if it exists, otherwise return default data
-  return (
-    locations[id as keyof typeof locations] || [
-      { icon: FaStore, label: "Convenience Store", distance: "250m" },
-      { icon: FaUtensils, label: "Cafeteria", distance: "300m" },
-      { icon: FaHospital, label: "Medical Center", distance: "400m" },
-      { icon: FaSubway, label: "Metro", distance: "350m" },
-    ]
-  )
+  return locations[id as keyof typeof locations] || []
 }
 
 export default function PropertyLocation({ propertyId }: PropertyLocationProps) {
+  const router = useRouter()
   const locationData = getDummyLocationData(propertyId)
 
   // Animation variants
@@ -50,10 +44,7 @@ export default function PropertyLocation({ propertyId }: PropertyLocationProps) 
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
     },
   }
 
@@ -96,10 +87,15 @@ export default function PropertyLocation({ propertyId }: PropertyLocationProps) 
         ))}
       </div>
 
+      {/* View All Button */}
       <div className="flex justify-center mt-4">
-        <button className="text-red-500 text-sm">View All</button>
+        <button
+          className="text-red-500 text-sm"
+          onClick={() => router.push(`/PropertyLocation/${propertyId}`)}
+        >
+          View All
+        </button>
       </div>
     </motion.div>
   )
 }
-

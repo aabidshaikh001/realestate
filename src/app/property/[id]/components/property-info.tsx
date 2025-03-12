@@ -21,6 +21,7 @@ const getDummyPropertyData = (id: string) => {
       discount: "Book now & get 5% discount",
       visitBonus: "Get Rs 500 Per Visit",
       bhkOptions: ["2 BHK", "3 BHK", "4 BHK", "6 BHK"],
+      Comapnayimage:"/placeholder.svg?height=400&width=800"
     },
     "prop-002": {
       title: "Green Valley Villa",
@@ -29,6 +30,7 @@ const getDummyPropertyData = (id: string) => {
       discount: "Early bird discount of 7%",
       visitBonus: "Get Rs 750 Per Visit",
       bhkOptions: ["3 BHK", "4 BHK", "5 BHK"],
+      Comapnayimage:"/placeholder.svg?height=400&width=800"
     },
     "prop-003": {
       title: "Urban Heights Condo",
@@ -37,6 +39,7 @@ const getDummyPropertyData = (id: string) => {
       discount: "Launch offer: 10% off",
       visitBonus: "Get Rs 500 Per Visit",
       bhkOptions: ["1 BHK", "2 BHK", "3 BHK"],
+      Comapnayimage:"/placeholder.svg?height=400&width=800"
     },
   }
 
@@ -49,6 +52,7 @@ const getDummyPropertyData = (id: string) => {
       discount: "Special offer: 8% discount",
       visitBonus: "Get Rs 600 Per Visit",
       bhkOptions: ["2 BHK", "3 BHK", "4 BHK"],
+      Comapnayimage:"/placeholder.svg?height=400&width=800"
     }
   )
 }
@@ -63,7 +67,7 @@ export default function PropertyInfo({ propertyId }: PropertyInfoProps) {
         <div>
           <div className="flex items-center gap-2">
             <Image
-              src="/placeholder.svg?height=40&width=40"
+              src={propertyData.Comapnayimage}
               alt="Builder Logo"
               width={40}
               height={40}

@@ -41,7 +41,7 @@ export default function PropertyDetails() {
       <AboutBuilder propertyId={propertyId} />
       <BrochureCard propertyId={propertyId} />
       <PriceTrend />
-      <Ratings />
+      <Ratings propertyId={propertyId} />
       <TermsConditions />
     </div>
     </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { FaRulerCombined, FaBed, FaBath, FaParking } from "react-icons/fa"
 
@@ -13,8 +14,8 @@ const getDummyAmenities = (id: string) => {
     "prop-001": [
       { icon: FaRulerCombined, label: "2110 Sqft" },
       { icon: FaBed, label: "3 Beds" },
-      { icon: FaBath, label: "1 Baths" },
-      { icon: FaParking, label: "1 Garages" },
+      { icon: FaBath, label: "1 Bath" },
+      { icon: FaParking, label: "1 Garage" },
     ],
     "prop-002": [
       { icon: FaRulerCombined, label: "2500 Sqft" },
@@ -25,23 +26,16 @@ const getDummyAmenities = (id: string) => {
     "prop-003": [
       { icon: FaRulerCombined, label: "1800 Sqft" },
       { icon: FaBed, label: "2 Beds" },
-      { icon: FaBath, label: "1 Baths" },
-      { icon: FaParking, label: "1 Garages" },
+      { icon: FaBath, label: "1 Bath" },
+      { icon: FaParking, label: "1 Garage" },
     ],
   }
 
-  // Return amenities if they exist, otherwise return default data
-  return (
-    amenities[id as keyof typeof amenities] || [
-      { icon: FaRulerCombined, label: "2000 Sqft" },
-      { icon: FaBed, label: "3 Beds" },
-      { icon: FaBath, label: "2 Baths" },
-      { icon: FaParking, label: "1 Garages" },
-    ]
-  )
+  return amenities[id as keyof typeof amenities] || []
 }
 
 export default function PropertyAmenities({ propertyId }: PropertyAmenitiesProps) {
+  const router = useRouter()
   const amenities = getDummyAmenities(propertyId)
 
   // Animation variants
@@ -49,10 +43,7 @@ export default function PropertyAmenities({ propertyId }: PropertyAmenitiesProps
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
     },
   }
 
@@ -82,10 +73,15 @@ export default function PropertyAmenities({ propertyId }: PropertyAmenitiesProps
         ))}
       </div>
 
+      {/* View All Button */}
       <div className="flex justify-center mt-4">
-        <button className="text-red-500 text-sm">View All</button>
+        <button
+          className="text-red-500 text-sm"
+          onClick={() => router.push(`/PropertyAmenities/${propertyId}`)}
+        >
+          View All
+        </button>
       </div>
     </motion.div>
   )
 }
-
