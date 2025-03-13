@@ -41,4 +41,3 @@ className="object-contain filter invert-[22%] sepia-[100%] saturate-[10000%] hue
     </motion.header>
   )
 }
-
