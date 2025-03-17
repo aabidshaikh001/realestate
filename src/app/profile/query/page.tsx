@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import Header from "@/app/component/header"
 
 
 type QueryStatus = "pending" | "in-progress" | "resolved" | "closed"
@@ -198,6 +199,7 @@ export default function QueryPage() {
 
   return (
     <div className="pb-20">
+      <Header/>
       <header className="flex items-center p-4 border-b">
         <Link href="/profile" className="mr-4">
           <ArrowLeft className="h-5 w-5" />

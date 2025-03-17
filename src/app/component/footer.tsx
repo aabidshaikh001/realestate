@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react"; // Import useMemo
 import Link from "next/link";
-import { HomeIcon, Star, Plus, Mic, Menu } from "lucide-react";
+import { HomeIcon,  Plus,  Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { MdCurrencyRupee } from "react-icons/md";
+
+import { BsBuildingsFill } from "react-icons/bs";
+
 
 export default function Footer() {
   const pathname = usePathname(); // Get the current pathname
@@ -13,9 +17,9 @@ export default function Footer() {
   const navItems = useMemo(
     () => [
       { name: "Home", icon: HomeIcon, id: "home", href: "/" },
-      { name: "Saved", icon: Star, id: "saved", href: "/saved" },
-      { name: "Add", icon: Plus, id: "add", href: "/add" },
-      { name: "Chat", icon: Mic, id: "chat", href: "/chat" },
+      { name: "Properties", icon: BsBuildingsFill, id: "Properties", href: "/Properties" },
+      { name: "Visit", icon: Plus, id: "visit", href: "/add" },
+      { name: "Revenue", icon: MdCurrencyRupee, id: "Revenue", href: "/Revenue" },
       { name: "Profile", icon: Menu, id: "profile", href: "/profile" },
     ],
     [] // Empty dependency array means navItems is only created once
@@ -39,12 +43,12 @@ export default function Footer() {
                 activeTab === item.id ? "text-red-500" : "text-gray-500"
               }`}
             >
-              {item.id === "add" ? (
-                <div className="bg-red-500 rounded-full p-3 -mt-5 mb-1 text-white">
-                  <item.icon className="h-5 w-5" />
+              {item.id === "visit" ? (
+                <div className="bg-red-500 rounded-full p-3 -mt-8 mb-1 text-white">
+                  <item.icon className="h-7 w-7" />
                 </div>
               ) : (
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-7 w-7" />
               )}
               <span className="text-xs mt-1">{item.name}</span>
               {activeTab === item.id && (

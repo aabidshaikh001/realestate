@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ArrowLeft, Edit2, ChevronDown, MapPin, Home, Briefcase, Building, Plus, X, Check, Search } from "lucide-react"
 import Link from "next/link"
+import Header from "@/app/component/header"
 
 interface ChipItem {
   id: string
@@ -144,6 +145,7 @@ export default function PreferencesPage() {
 
   return (
     <div className="pb-20">
+       <Header/> 
       <header className="flex items-center p-4 border-b">
         <Link href="/profile" className="mr-4">
           <ArrowLeft className="h-5 w-5" />

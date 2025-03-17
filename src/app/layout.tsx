@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ClientWrapper from "./component/ClientWrapper"; // Import the ClientWrapper
+import { AuthProvider } from "@/providers/auth-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"; // Adjust the import path as needed
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,9 +30,12 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      > <AuthProvider>
+        <TooltipProvider>
         {/* Wrap children with ClientWrapper */}
         <ClientWrapper>{children}</ClientWrapper>
+        </TooltipProvider>
+        </AuthProvider>
       </body>
     </html>
   );

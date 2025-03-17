@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ArrowLeft, Edit2, FileText, Check, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
+import Header from "@/app/component/header"
 
 
 export default function TermsPage() {
@@ -116,6 +117,7 @@ function TermsSection({
 }) {
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <Header/>
       <button className="w-full p-4 flex items-center justify-between bg-gray-50" onClick={onToggle}>
         <span className="font-medium">{title}</span>
         {isExpanded ? (

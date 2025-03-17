@@ -3,11 +3,13 @@
 import { ArrowLeft, Edit2, Users, MessageSquare, ThumbsUp, Share2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import Header from "@/app/component/header"
 
 
 export default function CommunityPage() {
   return (
     <div className="pb-20">
+       <Header/> 
       <header className="flex items-center p-4 border-b">
         <Link href="/profile" className="mr-4">
           <ArrowLeft className="h-5 w-5" />
