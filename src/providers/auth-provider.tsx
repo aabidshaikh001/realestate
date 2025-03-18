@@ -7,23 +7,40 @@ import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
 // Base API URL - you can change this to your production URL when deploying
-const API_BASE_URL = "http://localhost:5000/api"
+// Use environment variable for better security and flexibility
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
+// Improved User type with better organization
 type User = {
   id: string
   email: string
+  // Personal information
   name?: string
   phone?: string
   address?: string
-  pinNumber?: string
   image?: string
+  // Professional information
   reraNumber?: string
   document?: string[]
+  pinNumber?: string
+  // Banking information
   bankName?: string
   accountNumber?: string
   confirmAccountNumber?: string
   ifscCode?: string
   recipientName?: string
+}
+
+// API response types for better type safety
+type ApiResponse<T> = {
+  success: boolean
+  message: string
+  data?: T
+}
+
+type AuthResponse = {
+  token: string
+  user: User
 }
 
 type AuthContextType = {
@@ -40,6 +57,39 @@ type AuthContextType = {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Helper function for API calls to reduce code duplication
+async function apiRequest<T>(endpoint: string, method = "GET", body?: object, token?: string): Promise<ApiResponse<T>> {
+  try {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    })
+
+    const data = await response.json()
+
+    return {
+      success: response.ok,
+      message: data.message || (response.ok ? "Success" : "Request failed"),
+      data: data as T,
+    }
+  } catch (error) {
+    console.error(`API Error (${endpoint}):`, error)
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "An unexpected error occurred",
+    }
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -59,15 +109,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Fetch user data from API
-        const response = await fetch(`${API_BASE_URL}/user`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        const response = await apiRequest<User>("/user", "GET", undefined, token)
 
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData)
+        if (response.success && response.data) {
+          setUser(response.data)
         } else {
           // If the token is invalid, clear it
           localStorage.removeItem("authToken")
@@ -84,32 +129,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = async (email: string) => {
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address", {
+        position: "top-right",
+        autoClose: 5000,
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
       // Call the API to send OTP
-      const response = await fetch(`${API_BASE_URL}/sendotp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      })
+      const response = await apiRequest<{ message: string }>("/sendotp", "POST", { email })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (response.success) {
         // Store email temporarily for OTP verification
         sessionStorage.setItem("pendingAuthEmail", email)
 
-        toast.info(data.message || "Please check your email for the verification code", {
+        toast.info(response.message || "Please check your email for the verification code", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
-        
         })
-        router.push("/verify-otp"); // ✅ Directly redirecting to OTP page
+        router.push("/verify-otp")
       } else {
-        throw new Error(data.message || "Failed to send OTP")
+        throw new Error(response.message || "Failed to send OTP")
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -124,36 +168,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const verifyOtp = async (email: string, otp: string): Promise<boolean> => {
+    if (!otp || otp.length < 4) {
+      toast.error("Please enter a valid OTP", {
+        position: "top-right",
+        autoClose: 5000,
+      })
+      return false
+    }
+
     setIsLoading(true)
     try {
       // Call the API to verify OTP
-      const response = await fetch(`${API_BASE_URL}/verifyotp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, otp }),
-      })
+      const response = await apiRequest<AuthResponse>("/verifyotp", "POST", { email, otp })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (response.success && response.data) {
         // Save the token
-        localStorage.setItem("authToken", data.token)
+        localStorage.setItem("authToken", response.data.token)
 
         // Set user data
-        setUser(data.user)
+        setUser(response.data.user)
 
         toast.success("You have successfully logged in", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
-          onClick: () => router.push("/profile"),
         })
-      
+
+        // Redirect to profile page on successful login
+        router.push("/profile")
+
         return true
       } else {
-        toast.error(data.message || "Invalid OTP. Please try again.", {
+        toast.error(response.message || "Invalid OTP. Please try again.", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
@@ -174,32 +220,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (email: string) => {
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address", {
+        position: "top-right",
+        autoClose: 5000,
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
       // Call the API to register and send OTP
-      const response = await fetch(`${API_BASE_URL}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      })
+      const response = await apiRequest<{ message: string }>("/register", "POST", { email })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (response.success) {
         // Store email temporarily for OTP verification
         sessionStorage.setItem("pendingRegistrationEmail", email)
-        router.push("/verify-registration-otp")
 
-        toast.info(data.message || "Please check your email for the verification code", {
+        toast.info(response.message || "Please check your email for the verification code", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
         })
 
+        router.push("/verify-registration-otp")
       } else {
-        throw new Error(data.message || "Failed to register")
+        throw new Error(response.message || "Failed to register")
       }
     } catch (error) {
       console.error("Registration error:", error)
@@ -214,127 +260,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const verifyRegistrationOtp = async (email: string, otp: string): Promise<{ success: boolean; message?: string }> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/verifyregistrationotp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, otp }), // Ensure otp is correctly formatted
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        console.error("OTP Verification Failed:", data);
-        return { success: false, message: data?.message || "Invalid OTP" };
-      }
-    
-  
-      return { success: true, message: data?.message || "OTP Verified Successfully!" };
-    } catch (error) {
-      console.error("API Error:", error);
-      return { success: false, message: "Something went wrong. Please try again." };
+    if (!otp || otp.length < 4) {
+      return { success: false, message: "Please enter a valid OTP" }
     }
-  };
-  
+
+    try {
+      const response = await apiRequest<{ message: string }>("/verifyregistrationotp", "POST", { email, otp })
+
+      if (!response.success) {
+        console.error("OTP Verification Failed:", response.message)
+        return { success: false, message: response.message || "Invalid OTP" }
+      }
+
+      return { success: true, message: response.message || "OTP Verified Successfully!" }
+    } catch (error) {
+      console.error("API Error:", error)
+      return { success: false, message: "Something went wrong. Please try again." }
+    }
+  }
 
   const updateUserProfile = async (userData: Partial<User>): Promise<boolean> => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const token = localStorage.getItem("authToken");
+      const token = localStorage.getItem("authToken")
   
       if (!token) {
-        throw new Error("Authentication required");
+        throw new Error("Authentication required")
       }
   
       // Ensure `id` is defined
       if (!user?.id) {
-        throw new Error("User ID is required");
+        throw new Error("User ID is required")
       }
-  
-      // Prepare the data to match the expected structure
-      const payload = {
-        email: userData.email,
-        name: userData.name,
-        phone: userData.phone,
-        address: userData.address,
-        pinNumber: userData.pinNumber,
-        image: userData.image,
-        reraNumber: userData.reraNumber,
-        bankName: userData.bankName,
-        accountNumber: userData.accountNumber,
-        ifscCode: userData.ifscCode,
-        recipientName: userData.recipientName,
-        document: userData.document, // Include documents if needed
-      };
   
       // Call the API to update user profile
-      const response = await fetch(`${API_BASE_URL}/user/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await apiRequest<User>("/user/profile", "PUT", userData, token)
   
-      const data = await response.json();
+      if (response.success && response.data) {
+        setUser(response.data) // Update state with new user data
   
-      if (response.ok) {
-        // Update user data in state
-        setUser((prev) =>
-          prev ? ({ ...prev, ...payload } as User) : null
-        );
-        
-  
-        toast.success("Your profile has been updated successfully", {
-          position: "top-right",
+        toast.success("Profile updated successfully", {
           autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-        return true;
+          closeButton: true,
+          position: "top-right",
+        })
+  
+        router.push("/profile") // Redirect to the profile page
+  
+        return true
       } else {
-        throw new Error(data.message || "Failed to update profile");
+        throw new Error(response.message || "Failed to update profile")
       }
     } catch (error) {
-      console.error("Profile update error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update profile. Please try again.", {
-        position: "top-right",
+      console.error("Profile update error:", error)
+      toast.error(error instanceof Error ? error.message : "Profile update failed. Please try again.", {
         autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-      return false;
+        closeButton: true,
+        position: "top-right",
+      })
+      return false
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+  
   const logout = async () => {
     try {
       const token = localStorage.getItem("authToken")
 
       if (token) {
         // Call the API to logout (optional - for server-side session management)
-        await fetch(`${API_BASE_URL}/logout`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }).catch((err) => console.error("Logout API error:", err))
+        await apiRequest("/logout", "POST", undefined, token).catch((err) => console.error("Logout API error:", err))
       }
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
       // Clear local storage and state regardless of API response
       localStorage.removeItem("authToken")
+      localStorage.removeItem("authSkipped")
       sessionStorage.removeItem("pendingAuthEmail")
       sessionStorage.removeItem("pendingRegistrationEmail")
       setUser(null)
@@ -354,21 +357,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/profile")
   }
 
+  // Create a value object outside the JSX for better readability
+  const contextValue: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login,
+    verifyOtp,
+    register,
+    verifyRegistrationOtp,
+    logout,
+    skipAuth,
+    updateUserProfile,
+  }
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        verifyOtp,
-        register,
-        verifyRegistrationOtp,
-        logout,
-        skipAuth,
-        updateUserProfile,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       <ToastContainer />
       {children}
     </AuthContext.Provider>
