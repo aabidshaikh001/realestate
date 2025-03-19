@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
@@ -58,8 +58,33 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Helper function for API calls to reduce code duplication
-async function apiRequest<T>(endpoint: string, method = "GET", body?: object, token?: string): Promise<ApiResponse<T>> {
+// Cache for API responses
+const apiCache = new Map<string, { data: any; timestamp: number }>()
+const CACHE_TTL = 60000 // 1 minute cache TTL
+
+// Improved helper function for API calls with caching and AbortController
+async function apiRequest<T>(
+  endpoint: string,
+  method = "GET",
+  body?: object,
+  token?: string,
+  useCache = false,
+): Promise<ApiResponse<T>> {
+  // Create a cache key for GET requests
+  const cacheKey = useCache && method === "GET" ? `${endpoint}-${token ? "auth" : "noauth"}` : null
+
+  // Check cache for GET requests
+  if (cacheKey) {
+    const cachedResponse = apiCache.get(cacheKey)
+    if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL) {
+      return cachedResponse.data
+    }
+  }
+
+  // Create AbortController for request cancellation
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
   try {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -73,16 +98,41 @@ async function apiRequest<T>(endpoint: string, method = "GET", body?: object, to
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+      // Add cache control headers
+      cache: method === "GET" ? "default" : "no-store",
     })
+
+    clearTimeout(timeoutId)
 
     const data = await response.json()
 
-    return {
+    const result = {
       success: response.ok,
       message: data.message || (response.ok ? "Success" : "Request failed"),
       data: data as T,
     }
+
+    // Cache successful GET responses
+    if (cacheKey && response.ok) {
+      apiCache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now(),
+      })
+    }
+
+    return result
   } catch (error) {
+    clearTimeout(timeoutId)
+
+    // Handle AbortController errors separately
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return {
+        success: false,
+        message: "Request timed out. Please check your connection and try again.",
+      }
+    }
+
     console.error(`API Error (${endpoint}):`, error)
     return {
       success: false,
@@ -98,233 +148,258 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is authenticated on initial load
   useEffect(() => {
+    let isMounted = true
+    const controller = new AbortController()
+
     const checkAuth = async () => {
       try {
         // Get the token from localStorage
         const token = localStorage.getItem("authToken")
 
         if (!token) {
-          setIsLoading(false)
+          if (isMounted) setIsLoading(false)
           return
         }
 
-        // Fetch user data from API
-        const response = await apiRequest<User>("/user", "GET", undefined, token)
+        // Fetch user data from API with caching enabled
+        const response = await apiRequest<User>("/user", "GET", undefined, token, true)
 
-        if (response.success && response.data) {
+        if (response.success && response.data && isMounted) {
           setUser(response.data)
-        } else {
+        } else if (isMounted) {
           // If the token is invalid, clear it
           localStorage.removeItem("authToken")
         }
       } catch (error) {
         console.error("Authentication error:", error)
-        localStorage.removeItem("authToken")
+        if (isMounted) localStorage.removeItem("authToken")
       } finally {
-        setIsLoading(false)
+        if (isMounted) setIsLoading(false)
       }
     }
 
     checkAuth()
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
   }, [])
 
-  const login = async (email: string) => {
-    if (!email || !email.includes("@")) {
-      toast.error("Please enter a valid email address", {
-        position: "top-right",
-        autoClose: 5000,
-      })
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      // Call the API to send OTP
-      const response = await apiRequest<{ message: string }>("/sendotp", "POST", { email })
-
-      if (response.success) {
-        // Store email temporarily for OTP verification
-        sessionStorage.setItem("pendingAuthEmail", email)
-
-        toast.info(response.message || "Please check your email for the verification code", {
-          autoClose: 5000,
-          closeButton: true,
+  // Memoize functions to prevent unnecessary re-renders
+  const login = useCallback(
+    async (email: string) => {
+      if (!email || !email.includes("@")) {
+        toast.error("Please enter a valid email address", {
           position: "top-right",
+          autoClose: 5000,
         })
-        router.push("/verify-otp")
-      } else {
-        throw new Error(response.message || "Failed to send OTP")
+        return
       }
-    } catch (error) {
-      console.error("Login error:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to send OTP. Please try again.", {
-        autoClose: 5000,
-        closeButton: true,
-        position: "top-right",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
-  const verifyOtp = async (email: string, otp: string): Promise<boolean> => {
-    if (!otp || otp.length < 4) {
-      toast.error("Please enter a valid OTP", {
-        position: "top-right",
-        autoClose: 5000,
-      })
-      return false
-    }
+      setIsLoading(true)
+      try {
+        // Call the API to send OTP
+        const response = await apiRequest<{ message: string }>("/sendotp", "POST", { email })
 
-    setIsLoading(true)
-    try {
-      // Call the API to verify OTP
-      const response = await apiRequest<AuthResponse>("/verifyotp", "POST", { email, otp })
+        if (response.success) {
+          // Store email temporarily for OTP verification
+          sessionStorage.setItem("pendingAuthEmail", email)
 
-      if (response.success && response.data) {
-        // Save the token
-        localStorage.setItem("authToken", response.data.token)
-
-        // Set user data
-        setUser(response.data.user)
-
-        toast.success("You have successfully logged in", {
+          toast.info(response.message || "Please check your email for the verification code", {
+            autoClose: 5000,
+            closeButton: true,
+            position: "top-right",
+          })
+          router.push("/verify-otp")
+        } else {
+          throw new Error(response.message || "Failed to send OTP")
+        }
+      } catch (error) {
+        console.error("Login error:", error)
+        toast.error(error instanceof Error ? error.message : "Failed to send OTP. Please try again.", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
         })
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [router],
+  )
 
-        // Redirect to profile page on successful login
-        router.push("/profile")
+  const verifyOtp = useCallback(
+    async (email: string, otp: string): Promise<boolean> => {
+      if (!otp || otp.length < 4) {
+        toast.error("Please enter a valid OTP", {
+          position: "top-right",
+          autoClose: 5000,
+        })
+        return false
+      }
 
-        return true
-      } else {
-        toast.error(response.message || "Invalid OTP. Please try again.", {
+      setIsLoading(true)
+      try {
+        // Call the API to verify OTP
+        const response = await apiRequest<AuthResponse>("/verifyotp", "POST", { email, otp })
+
+        if (response.success && response.data) {
+          // Save the token
+          localStorage.setItem("authToken", response.data.token)
+
+          // Set user data
+          setUser(response.data.user)
+
+          toast.success("You have successfully logged in", {
+            autoClose: 5000,
+            closeButton: true,
+            position: "top-right",
+          })
+
+          // Redirect to profile page on successful login
+          router.push("/profile")
+
+          return true
+        } else {
+          toast.error(response.message || "Invalid OTP. Please try again.", {
+            autoClose: 5000,
+            closeButton: true,
+            position: "top-right",
+          })
+          return false
+        }
+      } catch (error) {
+        console.error("OTP verification error:", error)
+        toast.error(error instanceof Error ? error.message : "Failed to verify OTP. Please try again.", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
         })
         return false
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("OTP verification error:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to verify OTP. Please try again.", {
-        autoClose: 5000,
-        closeButton: true,
-        position: "top-right",
-      })
-      return false
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    },
+    [router],
+  )
 
-  const register = async (email: string) => {
-    if (!email || !email.includes("@")) {
-      toast.error("Please enter a valid email address", {
-        position: "top-right",
-        autoClose: 5000,
-      })
-      return
-    }
+  const register = useCallback(
+    async (email: string) => {
+      if (!email || !email.includes("@")) {
+        toast.error("Please enter a valid email address", {
+          position: "top-right",
+          autoClose: 5000,
+        })
+        return
+      }
 
-    setIsLoading(true)
-    try {
-      // Call the API to register and send OTP
-      const response = await apiRequest<{ message: string }>("/register", "POST", { email })
+      setIsLoading(true)
+      try {
+        // Call the API to register and send OTP
+        const response = await apiRequest<{ message: string }>("/register", "POST", { email })
 
-      if (response.success) {
-        // Store email temporarily for OTP verification
-        sessionStorage.setItem("pendingRegistrationEmail", email)
+        if (response.success) {
+          // Store email temporarily for OTP verification
+          sessionStorage.setItem("pendingRegistrationEmail", email)
 
-        toast.info(response.message || "Please check your email for the verification code", {
+          toast.info(response.message || "Please check your email for the verification code", {
+            autoClose: 5000,
+            closeButton: true,
+            position: "top-right",
+          })
+
+          router.push("/verify-registration-otp")
+        } else {
+          throw new Error(response.message || "Failed to register")
+        }
+      } catch (error) {
+        console.error("Registration error:", error)
+        toast.error(error instanceof Error ? error.message : "Failed to register. Please try again.", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
         })
-
-        router.push("/verify-registration-otp")
-      } else {
-        throw new Error(response.message || "Failed to register")
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Registration error:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to register. Please try again.", {
-        autoClose: 5000,
-        closeButton: true,
-        position: "top-right",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    },
+    [router],
+  )
 
-  const verifyRegistrationOtp = async (email: string, otp: string): Promise<{ success: boolean; message?: string }> => {
-    if (!otp || otp.length < 4) {
-      return { success: false, message: "Please enter a valid OTP" }
-    }
-
-    try {
-      const response = await apiRequest<{ message: string }>("/verifyregistrationotp", "POST", { email, otp })
-
-      if (!response.success) {
-        console.error("OTP Verification Failed:", response.message)
-        return { success: false, message: response.message || "Invalid OTP" }
+  const verifyRegistrationOtp = useCallback(
+    async (email: string, otp: string): Promise<{ success: boolean; message?: string }> => {
+      if (!otp || otp.length < 4) {
+        return { success: false, message: "Please enter a valid OTP" }
       }
 
-      return { success: true, message: response.message || "OTP Verified Successfully!" }
-    } catch (error) {
-      console.error("API Error:", error)
-      return { success: false, message: "Something went wrong. Please try again." }
-    }
-  }
+      try {
+        const response = await apiRequest<{ message: string }>("/verifyregistrationotp", "POST", { email, otp })
 
-  const updateUserProfile = async (userData: Partial<User>): Promise<boolean> => {
-    setIsLoading(true)
-    try {
-      const token = localStorage.getItem("authToken")
-  
-      if (!token) {
-        throw new Error("Authentication required")
+        if (!response.success) {
+          console.error("OTP Verification Failed:", response.message)
+          return { success: false, message: response.message || "Invalid OTP" }
+        }
+
+        return { success: true, message: response.message || "OTP Verified Successfully!" }
+      } catch (error) {
+        console.error("API Error:", error)
+        return { success: false, message: "Something went wrong. Please try again." }
       }
-  
-      // Ensure `id` is defined
-      if (!user?.id) {
-        throw new Error("User ID is required")
-      }
-  
-      // Call the API to update user profile
-      const response = await apiRequest<User>("/user/profile", "PUT", userData, token)
-  
-      if (response.success && response.data) {
-        setUser(response.data) // Update state with new user data
-  
-        toast.success("Profile updated successfully", {
+    },
+    [],
+  )
+
+  const updateUserProfile = useCallback(
+    async (userData: Partial<User>): Promise<boolean> => {
+      setIsLoading(true)
+      try {
+        const token = localStorage.getItem("authToken")
+
+        if (!token) {
+          throw new Error("Authentication required")
+        }
+
+        // Ensure `id` is defined
+        if (!user?.id) {
+          throw new Error("User ID is required")
+        }
+
+        // Call the API to update user profile
+        const response = await apiRequest<User>("/user/profile", "PUT", userData, token)
+
+        if (response.success && response.data) {
+          setUser(response.data) // Update state with new user data
+
+          toast.success("Profile updated successfully", {
+            autoClose: 5000,
+            closeButton: true,
+            position: "top-right",
+          })
+
+          router.push("/profile") // Redirect to the profile page
+
+          return true
+        } else {
+          throw new Error(response.message || "Failed to update profile")
+        }
+      } catch (error) {
+        console.error("Profile update error:", error)
+        toast.error(error instanceof Error ? error.message : "Profile update failed. Please try again.", {
           autoClose: 5000,
           closeButton: true,
           position: "top-right",
         })
-  
-        router.push("/profile") // Redirect to the profile page
-  
-        return true
-      } else {
-        throw new Error(response.message || "Failed to update profile")
+        return false
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Profile update error:", error)
-      toast.error(error instanceof Error ? error.message : "Profile update failed. Please try again.", {
-        autoClose: 5000,
-        closeButton: true,
-        position: "top-right",
-      })
-      return false
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  
-  const logout = async () => {
+    },
+    [user, router],
+  )
+
+  const logout = useCallback(async () => {
     try {
       const token = localStorage.getItem("authToken")
 
@@ -340,6 +415,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("authSkipped")
       sessionStorage.removeItem("pendingAuthEmail")
       sessionStorage.removeItem("pendingRegistrationEmail")
+
+      // Clear API cache on logout
+      apiCache.clear()
+
       setUser(null)
 
       toast.success("You have been successfully logged out", {
@@ -349,31 +428,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         onClick: () => router.push("/login"),
       })
     }
-  }
+  }, [router])
 
-  const skipAuth = () => {
+  const skipAuth = useCallback(() => {
     // Set a flag in localStorage to indicate the user skipped auth
     localStorage.setItem("authSkipped", "true")
     router.push("/profile")
-  }
+  }, [router])
 
-  // Create a value object outside the JSX for better readability
-  const contextValue: AuthContextType = {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    login,
-    verifyOtp,
-    register,
-    verifyRegistrationOtp,
-    logout,
-    skipAuth,
-    updateUserProfile,
-  }
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated: !!user,
+      login,
+      verifyOtp,
+      register,
+      verifyRegistrationOtp,
+      logout,
+      skipAuth,
+      updateUserProfile,
+    }),
+    [user, isLoading, login, verifyOtp, register, verifyRegistrationOtp, logout, skipAuth, updateUserProfile],
+  )
 
   return (
     <AuthContext.Provider value={contextValue}>
-      <ToastContainer />
+      <ToastContainer limit={3} />
       {children}
     </AuthContext.Provider>
   )
@@ -386,4 +468,3 @@ export function useAuth() {
   }
   return context
 }
-
