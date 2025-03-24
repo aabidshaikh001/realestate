@@ -1,56 +1,144 @@
-"use client";
+"use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Mic, Building2, HomeIcon, Map, Store, ChevronRight } from "lucide-react"
+import { Search, Mic, Building2, HomeIcon, Map, Store, ChevronRight, Share2, Home, Award, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Header from "./component/header"
 import Footer from "./component/footer"
-import PropertyCard, { type Property } from "./component/property-card"
 
-const properties: Property[] = [
-  {
-    id: "prop-001",
-    title: "Sky Dandelions Apartment",
-    location: "Luxury Apartment in Malang, Jakarta",
-    price: "₹ 3.94 L - 6.01 Cr",
-    image: "https://5.imimg.com/data5/SELLER/Default/2023/12/366388376/JX/LT/KB/79515996/p331-villa-for-sale-in-mathukoth-kannur.jpeg",
-    brokerage: "5% Brokerage",
-    tag: "Best Seller",
-    readyToMove: true,
-    discount: "Book now & get 5% discount",
-    visitBonus: "Get Rs 500 Per Visit",
-    bhkOptions: ["2 BHK", "3 BHK", "4 BHK", "6 BHK"],
-  },
-  {
-    id: "prop-002",
-    title: "Green Valley Villa",
-    location: "Premium Villa in Bandung, Indonesia",
-    price: "₹ 5.25 L - 8.50 Cr",
-    image: "https://victoriarealtors.in/wp-content/uploads/2023/05/shutterstock_2066280941-1024x576.jpg",
-    brokerage: "3% Brokerage",
-    tag: "Premium",
-    readyToMove: true,
-    discount: "Early bird discount of 7%",
-    visitBonus: "Get Rs 750 Per Visit",
-    bhkOptions: ["3 BHK", "4 BHK", "5 BHK"],
-  },
-  {
-    id: "prop-003",
-    title: "Urban Heights Condo",
-    location: "Modern Condo in Surabaya, Indonesia",
-    price: "₹ 2.80 L - 4.75 Cr",
-    image: "https://5.imimg.com/data5/SELLER/Default/2024/4/406385631/ZJ/XA/YH/79515996/p-00768-villa-for-sale-in-chala-kannur.jpg",
-    brokerage: "4% Brokerage",
-    tag: "New Launch",
-    readyToMove: false,
-    discount: "Launch offer: 10% off",
-    visitBonus: "Get Rs 500 Per Visit",
-    bhkOptions: ["1 BHK", "2 BHK", "3 BHK"],
-  },
-]
+// Property interface moved inside page.tsx
+export interface Property {
+  id: string
+  title: string
+  location: string
+  price: string
+  images: string[]
+  brokerage: string
+  tag: string
+  readyToMove: boolean
+  discount: string
+  visitBonus: string
+  bhkOptions: string[]
+}
+
+// PropertyCard component moved inside page.tsx
+function PropertyCard({ property }: { property: Property }) {
+  const bhkOptions = typeof property.bhkOptions === "string"
+  ? JSON.parse(property.bhkOptions) 
+  : [];
+  const imagesArray: string[] = Array.isArray(property.images)
+  ? property.images
+  : JSON.parse(property.images || "[]");
+
+
+  return (
+    <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 max-w-sm">
+      <div className="relative">
+      {imagesArray.length > 0 ? (
+  <Image
+    src={imagesArray[0]} // Display the first image
+    alt={property.title}
+    width={400}
+    height={200}
+    className="w-full h-[180px] object-cover"
+  />
+) : (
+  <Image
+    src="/placeholder.svg?height=200&width=400"
+    alt="Placeholder Image"
+    width={400}
+    height={200}
+    className="w-full h-[180px] object-cover"
+  />
+)}
+
+     
+             {/* Brokerage Tag */}
+             <div className="absolute top-3 left-3">
+               <span className="bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                 {property.brokerage}
+               </span>
+             </div>
+     
+             {/* Best Seller Tag */}
+             <div className="absolute top-3 right-3">
+               <span className="bg-amber-400 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+                 <Award className="w-3 h-3" />
+                 {property.tag}
+               </span>
+             </div>
+     
+             {/* Ready to Move Tag */}
+             {property.readyToMove && (
+               <div className="absolute bottom-3 left-3">
+                 <span className="bg-black/70 text-white text-xs font-medium px-3 py-1 rounded-md flex items-center gap-1">
+                   <Clock className="w-3 h-3" />
+                   Ready to Move
+                 </span>
+               </div>
+             )}
+           </div>
+     
+           <div className="p-4">
+             {/* Property Details */}
+             <div className="flex justify-between items-start">
+               <div>
+                 <h3 className="font-bold text-lg text-gray-800">{property.title}</h3>
+                 <p className="text-sm text-gray-500 mt-1">{property.location}</p>
+               </div>
+               <button className="text-gray-400 hover:text-gray-600">
+                 <Share2 size={18} />
+               </button>
+             </div>
+     
+             {/* BHK Options */}
+             <div className="flex gap-2 mt-4">
+             {Array.isArray(bhkOptions) ? (
+  bhkOptions.map((option, index) => (
+    <div key={index} className="flex flex-col items-center">
+      <div className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md">
+        <Home size={16} className="text-gray-500" />
+      </div>
+      <span className="text-xs text-gray-600 mt-1">{option}</span>
+    </div>
+  ))
+) : (
+  <p className="text-sm text-gray-500">No BHK options available</p>
+)}
+             </div>
+     
+             {/* Price and Discount */}
+             <div className="mt-4">
+               <div className="flex items-center justify-between">
+                 <div>
+                   <h4 className="font-bold text-xl text-gray-900">{property.price}</h4>
+                   <p className="text-xs text-gray-500 mt-1">{property.discount}</p>
+                 </div>
+                 <div>
+                 <Link href={`/property/${property.id}`}>
+                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                       <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">Book Visit</Button>
+                     </motion.div>
+                   </Link>        </div>
+               </div>
+             </div>
+     
+             {/* Visit Bonus */}
+             {property.visitBonus && (
+               <div className="mt-3">
+                 <span className="bg-red-100 text-red-600 text-xs font-medium px-3 py-1 rounded-md">
+                   {property.visitBonus}
+                 </span>
+               </div>
+             )}
+           </div>
+         </div>
+  )
+}
 
 // Array of images for the banner
 const bannerImages = [
@@ -59,8 +147,27 @@ const bannerImages = [
   "https://5.imimg.com/data5/SELLER/Default/2022/7/QA/GZ/BO/79515996/whatsapp-image-2022-06-25-at-2-13-17-pm-500x500.jpeg",
 ]
 
-export default function Home() {
+export default function HomeMain() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const response = await fetch("https://apimobile-6zp8.onrender.com/api/properties"); // Replace with your actual API endpoint
+        const data = await response.json();
+        setProperties(data);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -145,12 +252,7 @@ export default function Home() {
       </motion.div>
 
       {/* Categories */}
-      <motion.div
-        className="px-4 mb-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
+      <motion.div className="px-4 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Categories</h3>
         </div>
@@ -181,7 +283,7 @@ export default function Home() {
       </motion.div>
 
       {/* Promoted Properties */}
-      <motion.div className="px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+      <motion.div className="px-4 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Promoted Property</h3>
           <Link href="#" className="text-sm text-red-500 flex items-center">
@@ -189,19 +291,26 @@ export default function Home() {
             <ChevronRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
-        <div className="space-y-4">
-          {properties.map((property, index) => (
-            <motion.div
-              key={property.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
-              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-            >
-              <PropertyCard property={property} />
-            </motion.div>
-          ))}
-        </div>
+
+        {loading ? (
+          <p className="text-center text-gray-500">Loading properties...</p>
+        ) : properties.length === 0 ? (
+          <p className="text-center text-gray-500">No properties available.</p>
+        ) : (
+          <div className="space-y-4">
+            {properties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+              >
+                <PropertyCard property={property} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </motion.div>
 
       {/* Footer */}
@@ -209,3 +318,4 @@ export default function Home() {
     </motion.div>
   )
 }
+

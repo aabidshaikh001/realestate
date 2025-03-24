@@ -6,24 +6,37 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { ChevronRight, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import { useEffect } from "react"
 
 interface AboutBuilderProps {
   propertyId: string
 }
 
-const builderData = {
-  "prop-001": {
-    description:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-  },
-  "prop-002": {
-    description: "Another builder description...",
-  },
-}
+
 
 export function AboutBuilder({ propertyId }: AboutBuilderProps) {
   const [isExpanded, setIsExpanded] = useState(true)
-  const data = builderData[propertyId as keyof typeof builderData] || builderData["prop-001"]
+  const [builderDescription, setBuilderDescription] = useState<string>("")
+ 
+  
+  useEffect(() => {
+    const fetchBuilderDetails = async () => {
+    
+      try {
+        const response = await fetch(`/api/builder-details/${propertyId}`)
+        if (!response.ok) throw new Error("Failed to fetch builder details")
+        const data = await response.json()
+        setBuilderDescription(data?.overview || "No details available.")
+      } catch (error) {
+        console.error("Error fetching builder details:", error)
+      }
+     
+    }
+  
+    fetchBuilderDetails()
+  }, [propertyId])
+
+ 
 
   return (
     <Card className="border-0 shadow-sm bg-white">
@@ -47,7 +60,7 @@ export function AboutBuilder({ propertyId }: AboutBuilderProps) {
             transition={{ duration: 0.3 }}
           >
             <CardContent className="px-4 pb-4">
-              <p className="text-gray-600 text-sm leading-relaxed">{data.description}</p>
+              <p className="text-gray-600 text-sm leading-relaxed">{builderDescription}</p>
               <Link href={`/builder/${propertyId}`}>
                 <Button variant="link" className="text-blue-600 font-semibold p-0 h-auto mt-2">
                   View Full Details

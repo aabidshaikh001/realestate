@@ -9,58 +9,6 @@ interface PropertyImagesProps {
   propertyId: string
 }
 
-// Dummy data based on property ID
-const getDummyPropertyData = (id: string) => {
-  const properties = {
-    "prop-001": {
-      images: [
-        "https://www.holidify.com/images/cmsuploads/compressed/352709973_20221014181714.jpg",
-        "https://d4b28jbnqso5g.cloudfront.net/IMG_7246_HDR_c3a3ef39e3.webp",
-        "https://r1imghtlak.mmtcdn.com/07473928-9d9c-4a72-9dd8-8cb389e2d666.jpg",
-        "https://r1imghtlak.mmtcdn.com/69eedc1a-b74d-4814-9373-61eadc315c60.jpg",
-        "https://r1imghtlak.mmtcdn.com/a21193ec-c5fb-43ea-a3b0-89634189309b.jpg",
-      ],
-      title: "Sky Dandelions Apartment",
-      brokerage: "5% Brokerage",
-      tag: "Best Seller",
-      readyToMove: true,
-    },
-    "prop-002": {
-      images: [
-        "/placeholder.svg?height=400&width=800",
-        "/placeholder.svg?height=400&width=800&text=Image2",
-        "/placeholder.svg?height=400&width=800&text=Image3",
-      ],
-      title: "Green Valley Villa",
-      brokerage: "3% Brokerage",
-      tag: "Premium",
-      readyToMove: true,
-    },
-    "prop-003": {
-      images: [
-        "/placeholder.svg?height=400&width=800",
-        "/placeholder.svg?height=400&width=800&text=Image2",
-        "/placeholder.svg?height=400&width=800&text=Image3",
-        "/placeholder.svg?height=400&width=800&text=Image4",
-      ],
-      title: "Urban Heights Condo",
-      brokerage: "4% Brokerage",
-      tag: "New Launch",
-      readyToMove: false,
-    },
-  }
-
-  // Return property data if it exists, otherwise return default data
-  return (
-    properties[id as keyof typeof properties] || {
-      images: ["/placeholder.svg?height=400&width=800", "/placeholder.svg?height=400&width=800&text=Image2"],
-      title: `Property ${id}`,
-      brokerage: "4.5% Brokerage",
-      tag: "Featured",
-      readyToMove: false,
-    }
-  )
-}
 
 // Available filters for image editing
 const filters = [
@@ -72,7 +20,15 @@ const filters = [
 ]
 
 export default function PropertyImages({ propertyId }: PropertyImagesProps) {
-  const propertyData = getDummyPropertyData(propertyId)
+  const [propertyData, setPropertyData] = useState<{
+    images: string[]
+    title: string
+    brokerage: string
+    tag: string
+    readyToMove: boolean
+  } | null>(null)
+  
+ 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [zoomLevel, setZoomLevel] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
@@ -82,6 +38,36 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
 
   const containerRef = useRef<HTMLDivElement>(null)
   const controls = useAnimation()
+  // Fetch data from API
+  useEffect(() => {
+    const fetchPropertyData = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/properties/${propertyId}`)
+        if (!response.ok) throw new Error("Failed to fetch property data")
+        
+        const data = await response.json()
+        
+        // Ensure images are parsed correctly
+        let parsedImages: string[] = []
+        if (data.images) {
+          try {
+            parsedImages = JSON.parse(data.images) // Parse JSON string into an array
+          } catch (error) {
+            console.error("Error parsing images:", error)
+          }
+        }
+  
+        setPropertyData({
+          ...data,
+          images: parsedImages, // Store the parsed images array
+        })
+      } catch (err) {
+        console.error("Could not load property data:", err)
+      }
+    }
+    fetchPropertyData()
+  }, [propertyId])
+  
 
   // Reset zoom and position when changing images
   useEffect(() => {
@@ -90,13 +76,8 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
     controls.start({ x: 0, y: 0, scale: 1 })
   }, [currentIndex, controls])
 
-  const nextImage = () => {
-    setCurrentIndex((prev) => (prev + 1) % propertyData.images.length)
-  }
-
-  const prevImage = () => {
-    setCurrentIndex((prev) => (prev - 1 + propertyData.images.length) % propertyData.images.length)
-  }
+  const nextImage = () => setCurrentIndex((prev) => (prev + 1) % propertyData!.images.length)
+  const prevImage = () => setCurrentIndex((prev) => (prev - 1 + propertyData!.images.length) % propertyData!.images.length)
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     // Only change image if not zoomed in
@@ -192,8 +173,8 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
             className="absolute inset-0 flex items-center justify-center"
           >
             <Image
-              src={propertyData.images[currentIndex] || "/placeholder.svg"}
-              alt={`${propertyData.title} - Image ${currentIndex + 1}`}
+              src={propertyData?.images[currentIndex] || "/placeholder.svg"}
+              alt={`${propertyData?.title} - Image ${currentIndex + 1}`}
               width={800}
               height={400}
               className="w-full h-full object-cover"
@@ -226,7 +207,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
 
       {/* Pagination Indicators */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-        {propertyData.images.map((_, index) => (
+        {propertyData?.images.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
@@ -241,53 +222,53 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
         <>
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-md">RERA</span>
-            <span className="bg-blue-500 text-white text-xs px-3 py-1 rounded-md">{propertyData.brokerage}</span>
+            <span className="bg-blue-500 text-white text-xs px-3 py-1 rounded-md">{propertyData?.brokerage}</span>
           </div>
 
           <div className="absolute top-4 right-4">
-            <span className="bg-amber-400 text-white text-xs px-3 py-1 rounded-md">{propertyData.tag}</span>
+            <span className="bg-amber-400 text-white text-xs px-3 py-1 rounded-md">{propertyData?.tag}</span>
           </div>
 
           <div className="absolute bottom-16 left-4">
             <span className="bg-gray-800 text-white text-xs px-3 py-1 rounded-md">
-              {propertyData.readyToMove ? "Ready to Move" : "Under Construction"}
+              {propertyData?.readyToMove ? "Ready to Move" : "Under Construction"}
             </span>
           </div>
         </>
       )}
 
       {/* Thumbnails */}
-      <div className="absolute bottom-4 right-4 flex gap-2">
-        {propertyData.images.slice(0, 3).map((image, index) => (
-          <motion.button
-            key={index}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-              currentIndex === index ? "ring-2 ring-blue-500" : "bg-white"
-            }`}
-          >
-            <Image
-              src={image || "/placeholder.svg"}
-              alt={`Thumbnail ${index + 1}`}
-              width={40}
-              height={40}
-              className="w-full h-full rounded-full object-cover"
-            />
-          </motion.button>
-        ))}
-        {propertyData.images.length > 3 && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setCurrentIndex(3)}
-            className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"
-          >
-            <span className="text-gray-700 font-medium">+{propertyData.images.length - 3}</span>
-          </motion.button>
-        )}
-      </div>
+<div className="absolute bottom-4 right-4 flex gap-2">
+  {propertyData?.images?.slice(0, 3).map((image, index) => (
+    <motion.button
+      key={index}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => setCurrentIndex(index)}
+      className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
+        currentIndex === index ? "ring-2 ring-blue-500" : "bg-white"
+      }`}
+    >
+      <Image
+        src={image || "/placeholder.svg"}
+        alt={`Thumbnail ${index + 1}`}
+        width={40}
+        height={40}
+        className="w-full h-full rounded-full object-cover"
+      />
+    </motion.button>
+  ))}
+  {propertyData?.images && propertyData.images.length > 3 && (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => setCurrentIndex(3)}
+      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md"
+    >
+      <span className="text-gray-700 font-medium">+{propertyData.images.length - 3}</span>
+    </motion.button>
+  )}
+</div>
 
       {/* Controls Toolbar */}
       <div className="absolute top-16 right-4 flex flex-col gap-2">
@@ -373,7 +354,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
 
       {/* Image Counter */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-        {currentIndex + 1} / {propertyData.images.length}
+        {currentIndex + 1} / {propertyData?.images.length}
       </div>
     </div>
   )

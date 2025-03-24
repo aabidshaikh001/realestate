@@ -4,40 +4,52 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { FaStore, FaUtensils, FaHospital, FaSubway, FaPlus } from "react-icons/fa"
+import { useEffect, useState } from "react"
+
+interface Location {
+  icon: string // Will store the icon name from the API
+  label: string
+  distance: string
+}
 
 interface PropertyLocationProps {
   propertyId: string
 }
 
-// Dummy location data based on property ID
-const getDummyLocationData = (id: string) => {
-  const locations = {
-    "prop-001": [
-      { icon: FaStore, label: "Mini Market", distance: "200m" },
-      { icon: FaUtensils, label: "Canteen", distance: "200m" },
-      { icon: FaHospital, label: "Hospital", distance: "200m" },
-      { icon: FaSubway, label: "Station", distance: "200m" },
-    ],
-    "prop-002": [
-      { icon: FaStore, label: "Mini Market", distance: "150m" },
-      { icon: FaUtensils, label: "Restaurant", distance: "300m" },
-      { icon: FaHospital, label: "Hospital", distance: "500m" },
-      { icon: FaSubway, label: "Station", distance: "1km" },
-    ],
-    "prop-003": [
-      { icon: FaStore, label: "Supermarket", distance: "100m" },
-      { icon: FaUtensils, label: "Food Court", distance: "250m" },
-      { icon: FaHospital, label: "Clinic", distance: "350m" },
-      { icon: FaSubway, label: "Bus Stop", distance: "150m" },
-    ],
-  }
-
-  return locations[id as keyof typeof locations] || []
+// Mapping API icon names to React Icons
+const iconMapping: Record<string, JSX.Element> = {
+  store: <FaStore className="text-gray-500 text-xl" />,
+  restaurant: <FaUtensils className="text-gray-500 text-xl" />,
+  hospital: <FaHospital className="text-gray-500 text-xl" />,
+  subway: <FaSubway className="text-gray-500 text-xl" />,
 }
 
 export default function PropertyLocation({ propertyId }: PropertyLocationProps) {
   const router = useRouter()
-  const locationData = getDummyLocationData(propertyId)
+  const [locationData, setLocationData] = useState<Location[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchLocationData = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/location/${propertyId}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch location data")
+        }
+        const data = await response.json()
+        setLocationData(data) // Assuming API returns an array of { icon, label, distance }
+      } catch (err) {
+        console.error("Error loading location data:", err); // ✅ Logs the error
+        setError(`Failed to load location data: ${err instanceof Error ? err.message : String(err)}`); // ✅ Uses the error
+      }
+       finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLocationData()
+  }, [propertyId])
 
   // Animation variants
   const containerVariants = {
@@ -75,17 +87,25 @@ export default function PropertyLocation({ propertyId }: PropertyLocationProps) 
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-4 gap-4">
-        {locationData.map((location, index) => (
-          <motion.div key={index} variants={itemVariants} className="flex flex-col items-center">
-            <div className="w-12 h-12 flex items-center justify-center mb-1">
-              <location.icon className="text-gray-500 text-xl" />
-            </div>
-            <span className="text-xs text-gray-700">{location.label}</span>
-            <span className="text-xs text-gray-500">{location.distance}</span>
-          </motion.div>
-        ))}
-      </div>
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : locationData.length > 0 ? (
+        <div className="grid grid-cols-4 gap-4">
+          {locationData.map((location, index) => (
+            <motion.div key={index} variants={itemVariants} className="flex flex-col items-center">
+              <div className="w-12 h-12 flex items-center justify-center mb-1">
+                {iconMapping[location.icon] || <FaStore className="text-gray-500 text-xl" />}
+              </div>
+              <span className="text-xs text-gray-700">{location.label}</span>
+              <span className="text-xs text-gray-500">{location.distance}</span>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <p>No location information available.</p>
+      )}
 
       {/* View All Button */}
       <div className="flex justify-center mt-4">

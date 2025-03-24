@@ -4,29 +4,29 @@ import { useRouter, useParams } from "next/navigation"
 import { ArrowLeft, Share2, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
+import { useEffect, useState } from "react"
 // Dummy about data based on property ID
-const getDummyAboutData = (id: string) => {
-  const aboutData = {
-    "prop-001":
-      "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-    "prop-002":
-      "Green Valley Villa is a premium residential project offering luxurious villas with modern amenities.",
-    "prop-003":
-      "Urban Heights Condo is a modern residential development in the heart of Surabaya with smart home features.",
-  }
 
-  return (
-    aboutData[id as keyof typeof aboutData] ||
-    "This property features modern architecture and premium amenities designed for comfortable living."
-  )
-}
 
 export default function AboutProjectPage() {
   const router = useRouter()
   const params = useParams()
   const propertyId = params.id as string // Get dynamic property ID
-  const aboutData = getDummyAboutData(propertyId)
+  const [aboutData, setAboutData] = useState<string | null>(null)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`https://apimobile-6zp8.onrender.com/api/aboutproperty/${propertyId}`)
+        const data = await res.json()
+        setAboutData(data.description)
+      } catch (error) {
+        console.error("Failed to fetch project data", error)
+        setAboutData("Failed to load project information.")
+      }
+    }
+  
+    fetchData()
+  }, [propertyId])
 
   // Share button functionality
   const handleShare = async () => {

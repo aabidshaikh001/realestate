@@ -3,34 +3,43 @@
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
+
+interface BankInfo {
+  name: string
+  logo: string
+}
 
 interface PropertyLoanInfoProps {
   propertyId: string
 }
 
-// Dummy loan info data based on property ID
-const getDummyLoanInfoData = (id: string) => {
-  const loanInfoData = {
-    "prop-001": [
-      { name: "AXIS BANK", logo: "/placeholder.svg?height=40&width=40" },
-      { name: "HDFC BANK", logo: "/placeholder.svg?height=40&width=40" },
-    ],
-    "prop-002": [
-      { name: "HDFC BANK", logo: "/placeholder.svg?height=40&width=40" },
-      { name: "ICICI BANK", logo: "/placeholder.svg?height=40&width=40" },
-    ],
-    "prop-003": [
-      { name: "SBI BANK", logo: "/placeholder.svg?height=40&width=40" },
-      { name: "KOTAK BANK", logo: "/placeholder.svg?height=40&width=40" },
-    ],
-  }
-
-  return loanInfoData[id as keyof typeof loanInfoData] || []
-}
-
 export default function PropertyLoanInfo({ propertyId }: PropertyLoanInfoProps) {
   const router = useRouter()
-  const loanInfoData = getDummyLoanInfoData(propertyId)
+  const [loanInfoData, setLoanInfoData] = useState<BankInfo[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchLoanInfo = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/bankinfo/${propertyId}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch loan info")
+        }
+        const data = await response.json()
+        setLoanInfoData(data) // Assuming API returns an array of { name, logo }
+      }catch (err) { 
+        console.error("Error loading loan info:", err); // ✅ Logs the error
+        setError(`Failed to load loan info: ${err instanceof Error ? err.message : String(err)}`); // ✅ Uses the error
+      }
+      finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLoanInfo()
+  }, [propertyId])
 
   return (
     <motion.div
@@ -41,7 +50,6 @@ export default function PropertyLoanInfo({ propertyId }: PropertyLoanInfoProps) 
     >
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold text-lg">Loan Approved By</h3>
-        {/* Navigate to full Loan Info page */}
         <button
           onClick={() => router.push(`/LoanInfo/${propertyId}`)}
           className="text-red-500 text-sm"
@@ -50,22 +58,30 @@ export default function PropertyLoanInfo({ propertyId }: PropertyLoanInfoProps) 
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {loanInfoData.map((bank, index) => (
-          <div key={index} className="border rounded-lg p-4 flex items-center gap-2">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Image
-                src={bank.logo || "/placeholder.svg"}
-                alt={bank.name}
-                width={40}
-                height={40}
-                className="object-contain"
-              />
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : loanInfoData.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {loanInfoData.map((bank, index) => (
+            <div key={index} className="border rounded-lg p-4 flex items-center gap-2">
+              <div className="w-10 h-10 flex items-center justify-center">
+                <Image
+                  src={bank.logo || "/placeholder.svg"}
+                  alt={bank.name}
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                />
+              </div>
+              <span className="font-medium">{bank.name}</span>
             </div>
-            <span className="font-medium">{bank.name}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p>No loan information available.</p>
+      )}
     </motion.div>
   )
 }

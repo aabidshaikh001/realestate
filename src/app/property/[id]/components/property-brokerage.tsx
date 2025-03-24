@@ -1,25 +1,34 @@
 "use client"
 
 import { motion } from "framer-motion"
-
+import { useEffect, useState } from "react";
 interface PropertyBrokerageProps {
   propertyId: string
 }
 
-// Dummy brokerage data based on property ID
-const getDummyBrokerageData = (id: string) => {
-  const brokerageData = {
-    "prop-001": "5%",
-    "prop-002": "3%",
-    "prop-003": "4%",
-  }
 
-  // Return brokerage data if it exists, otherwise return default data
-  return brokerageData[id as keyof typeof brokerageData] || "4.5%"
-}
+
+
 
 export default function PropertyBrokerage({ propertyId }: PropertyBrokerageProps) {
-  const brokerageData = getDummyBrokerageData(propertyId)
+  const [brokerage, setBrokerage] = useState<string | null>(null);
+ 
+
+  useEffect(() => {
+    const fetchBrokerage = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/properties/${propertyId}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        setBrokerage(data.brokerage || "N/A"); // Fallback in case API doesn't return a value
+      } catch (error) {
+        console.error("Error fetching brokerage data:", error);
+        setBrokerage("N/A"); // Default fallback
+      }
+    };
+
+    fetchBrokerage();
+  }, [propertyId]);
 
   return (
     <motion.div
@@ -33,7 +42,7 @@ export default function PropertyBrokerage({ propertyId }: PropertyBrokerageProps
       </div>
 
       <div className="border rounded-lg p-4">
-        <h4 className="font-semibold">Brokerage {brokerageData}</h4>
+        <h4 className="font-semibold">Brokerage {brokerage}</h4>
         <p className="text-sm text-gray-500 mt-1">Platform charges & applicable taxes shall be deducted</p>
       </div>
     </motion.div>

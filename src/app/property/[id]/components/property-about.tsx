@@ -2,31 +2,34 @@
 
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react";
 
 interface PropertyAboutProps {
   propertyId: string
 }
 
-// Dummy about data based on property ID
-const getDummyAboutData = (id: string) => {
-  const aboutData = {
-    "prop-001":
-      "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-    "prop-002":
-      "Green Valley Villa is a premium residential project offering luxurious villas with modern amenities.",
-    "prop-003":
-      "Urban Heights Condo is a modern residential development in the heart of Surabaya with smart home features.",
-  }
 
-  return (
-    aboutData[id as keyof typeof aboutData] ||
-    "This property features modern architecture and premium amenities designed for comfortable living."
-  )
-}
 
 export default function PropertyAbout({ propertyId }: PropertyAboutProps) {
   const router = useRouter()
-  const aboutData = getDummyAboutData(propertyId)
+   const [aboutData, setAboutData] = useState<string | null>(null);
+ 
+
+  useEffect(() => {
+    const fetchAboutData = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/aboutproperty/${propertyId}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        setAboutData(data.description || "No description available.");
+      } catch (error) {
+        console.error("Error fetching about data:", error);
+        setAboutData("No description available.");
+      } 
+    };
+
+    fetchAboutData();
+  }, [propertyId]);
 
   // Handle "View Details" button click
   const handleViewDetails = () => {

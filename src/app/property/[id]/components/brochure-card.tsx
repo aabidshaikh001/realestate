@@ -1,27 +1,40 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import Image from "next/image"
-import { Card, CardContent } from "@/components/ui/card"
-import { Download } from "lucide-react"
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { Card, CardContent } from "@/components/ui/card";
+import { Download } from "lucide-react";
+import { useEffect, useState } from "react"
+
 
 interface BrochureCardProps {
-  propertyId: string
+  propertyId: string;
 }
 
-const brochureData = {
-  "prop-001": {
-    title: "Sky Apartment Brochure",
-    logo: "/placeholder.svg?height=50&width=100",
-  },
-  "prop-002": {
-    title: "Ocean View Brochure",
-    logo: "/placeholder.svg?height=50&width=100",
-  },
-}
 
 export function BrochureCard({ propertyId }: BrochureCardProps) {
-  const data = brochureData[propertyId as keyof typeof brochureData] || brochureData["prop-001"]
+  const [brochure, setBrochure] = useState<{ title: string; logo: string; pdfLink: string } | null>(null)
+ 
+  
+  useEffect(() => {
+    const fetchBrochure = async () => {
+     
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/brochure/${propertyId}`)
+        if (!response.ok) throw new Error("Failed to fetch brochure")
+        const data = await response.json()
+        setBrochure(data)
+      } catch (error) {
+        console.error("Error fetching brochure:", error)
+      }
+    
+    }
+  
+    fetchBrochure()
+  }, [propertyId])
+
+
+ 
 
   return (
     <div className="space-y-3 px-4">
@@ -32,19 +45,21 @@ export function BrochureCard({ propertyId }: BrochureCardProps) {
             <div className="absolute inset-0 opacity-10 text-[80px] font-bold tracking-wider overflow-hidden whitespace-nowrap flex items-center justify-center">
               BROCHURE
             </div>
-            <Image src={data.logo || "/placeholder.svg"} alt="Builder Logo" width={80} height={40} className="mb-4" />
-            <h3 className="text-lg font-semibold text-center mb-2">{data.title}</h3>
-            <motion.div
-              className="flex items-center bg-white/20 rounded-full px-4 py-2 text-sm"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </motion.div>
+            <Image src={brochure?.logo || "/placeholder.svg"} alt="Builder Logo" width={80} height={40} className="mb-4" />
+            <h3 className="text-lg font-semibold text-center mb-2">{brochure?.title}</h3>
+            <motion.a
+  href={brochure?.pdfLink || "#"}
+  download={brochure?.title ? `${brochure.title}.pdf` : "brochure.pdf"}
+  className="flex items-center bg-white/20 rounded-full px-4 py-2 text-sm cursor-pointer"
+  whileHover={{ scale: 1.05 }}
+>
+  <Download className="w-4 h-4 mr-2" />
+  Download PDF
+</motion.a>
+
           </CardContent>
         </Card>
       </motion.div>
     </div>
-  )
+  );
 }
-

@@ -5,69 +5,65 @@ import { motion } from "framer-motion"
 import { FaBed, FaShareAlt } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
 import BookingModal from "./booking-modal"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface PropertyInfoProps {
   propertyId: string
 }
-
-// Dummy data based on property ID
-const getDummyPropertyData = (id: string) => {
-  const properties = {
-    "prop-001": {
-      title: "Sky Dandelions Apartment",
-      location: "Luxury Apartment in Malang, Jakarta",
-      price: "₹ 3.94 L - 6.01 Cr",
-      discount: "Book now & get 5% discount",
-      visitBonus: "Get Rs 500 Per Visit",
-      bhkOptions: ["2 BHK", "3 BHK", "4 BHK", "6 BHK"],
-      Comapnayimage:"/placeholder.svg?height=400&width=800"
-    },
-    "prop-002": {
-      title: "Green Valley Villa",
-      location: "Premium Villa in Bandung, Indonesia",
-      price: "₹ 5.25 L - 8.50 Cr",
-      discount: "Early bird discount of 7%",
-      visitBonus: "Get Rs 750 Per Visit",
-      bhkOptions: ["3 BHK", "4 BHK", "5 BHK"],
-      Comapnayimage:"/placeholder.svg?height=400&width=800"
-    },
-    "prop-003": {
-      title: "Urban Heights Condo",
-      location: "Modern Condo in Surabaya, Indonesia",
-      price: "₹ 2.80 L - 4.75 Cr",
-      discount: "Launch offer: 10% off",
-      visitBonus: "Get Rs 500 Per Visit",
-      bhkOptions: ["1 BHK", "2 BHK", "3 BHK"],
-      Comapnayimage:"/placeholder.svg?height=400&width=800"
-    },
+interface PropertyData {
+  title: string
+  CompanyImage: string
+  location: string
+  rating: number
+  bhkOptions: string[]
+  price: string
+  discount?: string
+  visitBonus?: string
+}
+const fetchPropertyData = async (propertyId: string): Promise<PropertyData | null> => {
+  try {
+    const res = await fetch(`https://apimobile-6zp8.onrender.com/api/properties/${propertyId}`)
+    if (!res.ok) throw new Error("Failed to fetch property data")
+    return await res.json() as PropertyData
+  } catch (error) {
+    console.error("Error fetching property data:", error)
+    return null
   }
-
-  // Return property data if it exists, otherwise return default data
-  return (
-    properties[id as keyof typeof properties] || {
-      title: `Property ${id}`,
-      location: "Dynamic Location, Generated City",
-      price: "₹ 4.50 L - 7.25 Cr",
-      discount: "Special offer: 8% discount",
-      visitBonus: "Get Rs 600 Per Visit",
-      bhkOptions: ["2 BHK", "3 BHK", "4 BHK"],
-      Comapnayimage:"/placeholder.svg?height=400&width=800"
-    }
-  )
 }
 
-export default function PropertyInfo({ propertyId }: PropertyInfoProps) {
-     const [isModalOpen, setIsModalOpen] = useState(false)
-  const propertyData = getDummyPropertyData(propertyId)
 
+
+
+export default function PropertyInfo({ propertyId }: PropertyInfoProps) {
+  const [propertyData, setPropertyData] = useState<PropertyData | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    fetchPropertyData(propertyId).then((data) => setPropertyData(data))
+  }, [propertyId])
+   // Parse bhkOptions safely
+   let bhkOptions: string[] = []
+
+   try {
+     if (propertyData?.bhkOptions && typeof propertyData.bhkOptions === "string") {
+       bhkOptions = JSON.parse(propertyData.bhkOptions) // ✅ Parse only if it's a valid string
+     } else if (Array.isArray(propertyData?.bhkOptions)) {
+       bhkOptions = propertyData.bhkOptions // ✅ Use directly if already an array
+     }
+   } catch (error) {
+     console.error("Error parsing BHK options:", error)
+     bhkOptions = []
+   }
+   
+
+  if (!propertyData) return <p>Loading property details...</p>
   return (
     <div className="p-4 border-b">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
             <Image
-              src={propertyData.Comapnayimage}
+                src={propertyData.CompanyImage}  // ✅ Use correct property name
               alt="Builder Logo"
               width={40}
               height={40}
@@ -101,9 +97,10 @@ export default function PropertyInfo({ propertyId }: PropertyInfoProps) {
         </button>
       </div>
 
+  
       {/* BHK Options */}
       <div className="flex justify-between mt-6">
-        {propertyData.bhkOptions.map((option, index) => (
+        {bhkOptions.map((option, index) => (
           <motion.div key={index} whileHover={{ y: -3 }} className="flex flex-col items-center">
             <div className="w-12 h-12 flex items-center justify-center border border-gray-200 rounded-md mb-1">
               <FaBed className="text-gray-500" />
@@ -112,6 +109,7 @@ export default function PropertyInfo({ propertyId }: PropertyInfoProps) {
           </motion.div>
         ))}
       </div>
+
 
       {/* Price */}
       <div className="mt-6">

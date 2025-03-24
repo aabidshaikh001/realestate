@@ -1,7 +1,7 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { ArrowLeft, Share2, MoreVertical, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,66 +16,31 @@ type Review = {
   review: string
 }
 
-// Define the type for ratings data
-type RatingsData = {
-  [propertyId: string]: Review[]
-}
-
-// Sample ratings data
-const ratings: RatingsData = {
-  "prop-001": [
-    {
-      id: 1,
-      name: "Sameer Sharma",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "My wife and I had a dream of downsizing from our house in Cape Elizabeth into a small condo closer to where we work and play in Portland. David and his skilled team helped make that dream a reality. The sale went smoothly, and we just closed on an ideal new place we're excited to call home...",
-    },
-    {
-      id: 2,
-      name: "Sameer Sharma",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "My wife and I had a dream of downsizing from our house in Cape Elizabeth into a small condo closer to where we work and play in Portland. David and his skilled team helped make that dream a reality. The sale went smoothly, and we just closed on an ideal new place we're excited to call home...",
-    },
-    {
-      id: 3,
-      name: "Sakib Shaikh",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "My wife and I had a dream of downsizing from our house in Cape Elizabeth into a small condo closer to where we work and play in Portland. David and his skilled team helped make that dream a reality. The sale went smoothly, and we just closed on an ideal new place we're excited to call home...",
-    },
-  ],
-  "prop-002": [
-    {
-      id: 1,
-      name: "John Doe",
-      avatar: "/placeholder-user.jpg",
-      rating: 4,
-      review:
-        "The property was exactly what we were looking for. Great location and amenities. The agent was very helpful throughout the entire process...",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "Exceptional service from start to finish. The team was responsive and made our first home buying experience smooth and enjoyable...",
-    },
-  ],
-}
-
 export default function RatingsPage() {
   const router = useRouter()
-  const params = useParams() // Get dynamic route params
-  const propertyId = params.id as string // Ensure propertyId is a string
+  const params = useParams()
+  const propertyId = params.id as string
+  const [propertyReviews, setPropertyReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Get reviews for the given propertyId
-  const propertyReviews = ratings[propertyId] || []
+  // Fetch ratings from API
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const res = await fetch(`https://apimobile-6zp8.onrender.com/api/ratings/${propertyId}`)
+        if (!res.ok) throw new Error("Failed to fetch ratings")
+
+        const data = await res.json()
+        setPropertyReviews(data) // Assuming API returns an array of reviews
+      } catch (error) {
+        console.error("Error fetching ratings:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRatings()
+  }, [propertyId])
 
   // Share button functionality
   const handleShare = async () => {
@@ -122,7 +87,9 @@ export default function RatingsPage() {
       {/* Main content */}
       <main className="pt-14 pb-4">
         <div className="space-y-4 p-4">
-          {propertyReviews.length > 0 ? (
+          {loading ? (
+            <p className="text-center text-gray-500">Loading...</p>
+          ) : propertyReviews.length > 0 ? (
             propertyReviews.map((review) => (
               <div key={review.id} className="bg-white border rounded-lg p-4 space-y-3">
                 <div className="flex items-center gap-3">

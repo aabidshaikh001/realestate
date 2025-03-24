@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"
 interface Project {
   name: string
   location: string
+  image: string
 }
 
 interface BuilderDetails {
@@ -23,42 +24,7 @@ interface BuilderDetails {
   projects: Project[]
 }
 
-// Extended builder data with more details
-const builderDetailsData: Record<string, BuilderDetails> = {
-  "prop-001": {
-    name: "Sky Builders",
-    established: "1995",
-    logo: "/placeholder.svg",
-    overview:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    experience:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    certifications:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    projects: [
-      { name: "Skyline Towers", location: "Downtown" },
-      { name: "Green Valley Villas", location: "Suburb East" },
-      { name: "Ocean View Apartments", location: "Coastal Area" },
-      { name: "Mountain Retreat Homes", location: "Highland District" },
-    ],
-  },
-  "prop-002": {
-    name: "Horizon Developers",
-    established: "2001",
-    logo: "/placeholder.svg",
-    overview:
-      "Horizon Developers is known for creating sustainable and modern living spaces with a focus on community development and environmental responsibility.",
-    experience:
-      "With over two decades of experience, Horizon has completed more than 50 residential and commercial projects across the country, earning multiple awards for design excellence.",
-    certifications: "ISO 9001, Green Building Council Certified, Energy Star Partner",
-    projects: [
-      { name: "Horizon Heights", location: "City Center" },
-      { name: "Sunrise Residences", location: "East End" },
-      { name: "Urban Lofts", location: "Arts District" },
-      { name: "Parkview Condos", location: "Riverside" },
-    ],
-  },
-}
+
 
 export default function BuilderDetailsPage() {
   const params = useParams()
@@ -68,10 +34,21 @@ export default function BuilderDetailsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate fetching data based on the ID
-    const data = builderDetailsData[id as keyof typeof builderDetailsData] || builderDetailsData["prop-001"]
-    setBuilderData(data)
-    setLoading(false)
+    const fetchBuilderDetails = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/builderdetails/${id}`)
+        if (!response.ok) throw new Error("Failed to fetch builder details")
+        const data: BuilderDetails = await response.json()
+        setBuilderData(data)
+      } catch (error) {
+        console.error("Error fetching builder details:", error)
+        setBuilderData(null)
+      }
+      setLoading(false)
+    }
+  
+    if (id) fetchBuilderDetails()
   }, [id])
 
   const handleShare = async () => {
@@ -153,7 +130,7 @@ export default function BuilderDetailsPage() {
               {builderData.projects.map((project: Project, index: number) => (
                 <div key={index} className="border rounded-lg p-4">
                   <Image
-                    src="/placeholder.svg"
+                    src={project.image || "/placeholder.svg"}
                     alt={`Project ${project.name}`}
                     width={150}
                     height={100}

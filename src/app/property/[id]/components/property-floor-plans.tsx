@@ -1,6 +1,5 @@
 "use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import Image from "next/image"
 import { motion } from "framer-motion"
 
@@ -8,38 +7,32 @@ interface PropertyFloorPlansProps {
   propertyId: string
 }
 
-// Dummy floor plan data based on property ID
-const getDummyFloorPlans = (id: string) => {
-  const floorPlans = {
-    "prop-001": [
-      { bhk: "3 BHK", area: "1413 Sq.ft.", price: "₹ 3.94 Cr", pricePerSqft: "₹ 27,884 / sq.ft." },
-      { bhk: "4 BHK", area: "1613 Sq.ft.", price: "₹ 4.76 Cr", pricePerSqft: "₹ 29,509 / sq.ft." },
-    ],
-    "prop-002": [
-      { bhk: "3 BHK", area: "1550 Sq.ft.", price: "₹ 5.25 Cr", pricePerSqft: "₹ 33,871 / sq.ft." },
-      { bhk: "4 BHK", area: "1850 Sq.ft.", price: "₹ 6.75 Cr", pricePerSqft: "₹ 36,486 / sq.ft." },
-      { bhk: "5 BHK", area: "2200 Sq.ft.", price: "₹ 8.50 Cr", pricePerSqft: "₹ 38,636 / sq.ft." },
-    ],
-    "prop-003": [
-      { bhk: "1 BHK", area: "750 Sq.ft.", price: "₹ 2.80 Cr", pricePerSqft: "₹ 37,333 / sq.ft." },
-      { bhk: "2 BHK", area: "1050 Sq.ft.", price: "₹ 3.75 Cr", pricePerSqft: "₹ 35,714 / sq.ft." },
-      { bhk: "3 BHK", area: "1350 Sq.ft.", price: "₹ 4.75 Cr", pricePerSqft: "₹ 35,185 / sq.ft." },
-    ],
-  }
-
-  // Return floor plans if they exist, otherwise return default data
-  return (
-    floorPlans[id as keyof typeof floorPlans] || [
-      { bhk: "2 BHK", area: "1100 Sq.ft.", price: "₹ 3.50 Cr", pricePerSqft: "₹ 31,818 / sq.ft." },
-      { bhk: "3 BHK", area: "1400 Sq.ft.", price: "₹ 4.50 Cr", pricePerSqft: "₹ 32,142 / sq.ft." },
-      { bhk: "4 BHK", area: "1700 Sq.ft.", price: "₹ 5.75 Cr", pricePerSqft: "₹ 33,823 / sq.ft." },
-    ]
-  )
+interface FloorPlan {
+  bhk: string;
+  area: string;
+  price: string;
+  pricePerSqft: string;
 }
 
 export default function PropertyFloorPlans({ propertyId }: PropertyFloorPlansProps) {
-  const floorPlans = getDummyFloorPlans(propertyId)
-  const [selectedBHK, setSelectedBHK] = useState("all")
+  const [floorPlan, setFloorPlan] = useState<FloorPlan | null>(null); // Change to a single object
+  const [selectedBHK, setSelectedBHK] = useState("all");
+
+  useEffect(() => {
+    const fetchFloorPlan = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/floorplan/${propertyId}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        setFloorPlan(data || null); // Set single object instead of array
+      } catch (error) {
+        console.error("Error fetching floor plan:", error);
+        setFloorPlan(null); // Default to null if fetching fails
+      } 
+    };
+
+    fetchFloorPlan();
+  }, [propertyId]);
 
   // Animation variants
   const containerVariants = {
@@ -82,47 +75,45 @@ export default function PropertyFloorPlans({ propertyId }: PropertyFloorPlansPro
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {floorPlans.map((plan, index) => (
-          <motion.div
-            key={index}
-            variants={itemVariants}
-            whileHover={{ y: -5 }}
-            className="border rounded-lg overflow-hidden"
-          >
-            <div className="relative">
-              <Image
-                src="/placeholder.svg?height=200&width=300"
-                alt="Floor Plan"
-                width={300}
-                height={200}
-                className="w-full h-[120px] object-cover"
-              />
-              <div className="absolute top-2 right-2">
-                <span className="bg-amber-400 text-white text-xs px-2 py-0.5 rounded-sm">{plan.bhk}</span>
-              </div>
+      {floorPlan ? (
+        <motion.div
+          variants={itemVariants}
+          whileHover={{ y: -5 }}
+          className="border rounded-lg overflow-hidden"
+        >
+          <div className="relative">
+            <Image
+              src="/placeholder.svg?height=200&width=300"
+              alt="Floor Plan"
+              width={300}
+              height={200}
+              className="w-full h-[120px] object-cover"
+            />
+            <div className="absolute top-2 right-2">
+              <span className="bg-amber-400 text-white text-xs px-2 py-0.5 rounded-sm">{floorPlan.bhk}</span>
             </div>
-            <div className="p-3">
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Super Built-Up Area</span>
-                <span>Price</span>
-              </div>
-              <div className="flex justify-between mt-1">
-                <span className="font-semibold">{plan.area}</span>
-                <span className="font-semibold">{plan.price}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>{plan.pricePerSqft}</span>
-              </div>
-              <div className="flex justify-between mt-3">
-                <button className="text-blue-500 text-xs">View Details</button>
-                <button className="text-blue-500 text-xs">Check Charges</button>
-              </div>
+          </div>
+          <div className="p-3">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>Super Built-Up Area</span>
+              <span>Price</span>
             </div>
-          </motion.div>
-        ))}
-      </div>
+            <div className="flex justify-between mt-1">
+              <span className="font-semibold">{floorPlan.area}</span>
+              <span className="font-semibold">{floorPlan.price}</span>
+            </div>
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>{floorPlan.pricePerSqft}</span>
+            </div>
+            <div className="flex justify-between mt-3">
+              <button className="text-blue-500 text-xs">View Details</button>
+              <button className="text-blue-500 text-xs">Check Charges</button>
+            </div>
+          </div>
+        </motion.div>
+      ) : (
+        <p className="text-gray-500 text-sm">No floor plan available.</p>
+      )}
     </motion.div>
   )
 }
-

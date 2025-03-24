@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Heart, MapPin, Search, Filter, X } from "lucide-react"
 
@@ -24,13 +24,14 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Header from "../component/header"
 import Footer from "../component/footer"
 
-// Define the Property type based on the provided fields
+
+// Define the Property type
 interface Property {
   id: string
   title: string
   location: string
   price: string
-  image: string
+  images: string[]  // Changed to an array of images
   brokerage: string
   tag: string
   readyToMove: boolean
@@ -38,123 +39,36 @@ interface Property {
   visitBonus: string
   bhkOptions: string[]
   isSaved?: boolean
+  isFeatured?: boolean
 }
 
 export default function PropertiesPage() {
   // Sample data for demonstration
-  const [properties, setProperties] = useState<Property[]>([
-    {
-      id: "1",
-      title: "Modern Apartment with Sea View",
-      location: "Downtown, New York",
-      price: "$2,500/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "2.5%",
-      tag: "Premium",
-      readyToMove: true,
-      discount: "10% off first month",
-      visitBonus: "$100 Amazon gift card",
-      bhkOptions: ["1 BHK", "2 BHK", "3 BHK"],
-      isSaved: true,
-    },
-    {
-      id: "2",
-      title: "Luxury Villa with Pool",
-      location: "Beverly Hills, Los Angeles",
-      price: "$5,000/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "3%",
-      tag: "Luxury",
-      readyToMove: true,
-      discount: "15% off first month",
-      visitBonus: "$200 Amazon gift card",
-      bhkOptions: ["3 BHK", "4 BHK"],
-    },
-    {
-      id: "3",
-      title: "Cozy Studio Apartment",
-      location: "Brooklyn, New York",
-      price: "$1,800/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "2%",
-      tag: "Budget",
-      readyToMove: false,
-      discount: "5% off first month",
-      visitBonus: "$50 Amazon gift card",
-      bhkOptions: ["Studio", "1 BHK"],
-    },
-    {
-      id: "4",
-      title: "Spacious Family Home",
-      location: "Queens, New York",
-      price: "$3,200/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "2.5%",
-      tag: "Family",
-      readyToMove: true,
-      discount: "7% off first month",
-      visitBonus: "$150 Amazon gift card",
-      bhkOptions: ["2 BHK", "3 BHK", "4 BHK"],
-      isSaved: true,
-    },
-    {
-      id: "5",
-      title: "Penthouse with Rooftop Garden",
-      location: "Manhattan, New York",
-      price: "$7,500/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "3.5%",
-      tag: "Premium",
-      readyToMove: true,
-      discount: "20% off first month",
-      visitBonus: "$300 Amazon gift card",
-      bhkOptions: ["3 BHK", "4 BHK", "5 BHK"],
-    },
-    {
-      id: "6",
-      title: "Riverside Apartment",
-      location: "Hudson River, New York",
-      price: "$3,800/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "2.75%",
-      tag: "Waterfront",
-      readyToMove: false,
-      discount: "12% off first month",
-      visitBonus: "$175 Amazon gift card",
-      bhkOptions: ["2 BHK", "3 BHK"],
-    },
-    {
-      id: "7",
-      title: "Downtown Loft with City Views",
-      location: "SoHo, New York",
-      price: "$4,200/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "2.5%",
-      tag: "Premium",
-      readyToMove: true,
-      discount: "First month free",
-      visitBonus: "$150 Amazon gift card",
-      bhkOptions: ["2 BHK", "3 BHK"],
-    },
-    {
-      id: "8",
-      title: "Garden Apartment in Quiet Area",
-      location: "Park Slope, Brooklyn",
-      price: "$2,800/month",
-      image: "/placeholder.svg?height=300&width=500",
-      brokerage: "2%",
-      tag: "Family",
-      readyToMove: true,
-      discount: "5% off first month",
-      visitBonus: "$100 Amazon gift card",
-      bhkOptions: ["2 BHK", "3 BHK"],
-    },
-  ])
-
+  const [properties, setProperties] = useState<Property[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+
   const [priceRange, setPriceRange] = useState([1000, 8000])
   const [viewType, setViewType] = useState<"grid" | "list">("list")
   const [sortOption, setSortOption] = useState("recommended")
+
+
+
+    // Fetch properties from API
+    useEffect(() => {
+      const fetchProperties = async () => {
+        try {
+          const response = await fetch("https://apimobile-6zp8.onrender.com/api/properties") // Replace with your actual API URL
+          if (!response.ok) throw new Error("Failed to fetch properties")
+          const data: Property[] = await response.json()
+          setProperties(data)
+        } catch (err) {
+          console.error(err)
+          console.log("Failed to load properties. Please try again later.")
+        }
+      }
+  
+      fetchProperties()
+    }, [])
 
   // Toggle saved status
   const toggleSaved = (id: string) => {
@@ -406,16 +320,39 @@ function PropertyCard({
   onToggleSaved: (id: string) => void
 }) {
   if (viewType === "grid") {
+    
+    const imagesArray: string[] = Array.isArray(property.images)
+    ? property.images
+    : JSON.parse(property.images || "[]");
+
+    const bhkOptionsArray = Array.isArray(property.bhkOptions)
+  ? property.bhkOptions
+  : typeof property.bhkOptions === "string"
+  ? JSON.parse(property.bhkOptions)
+  : [];
+
     return (
       <Card className="overflow-hidden shadow-sm border-gray-100 h-full flex flex-col">
         <div className="relative">
-          <Image
-            src={property.image || "/placeholder.svg"}
-            alt={property.title}
-            width={200}
-            height={150}
-            className="h-32 w-full object-cover"
-          />
+        
+          {imagesArray.length > 0 ? (
+            <Image
+              src={imagesArray[0]} // Display the first image
+              alt={property.title}
+              width={200}
+              height={150}
+              className="h-32 w-full object-cover"
+            />
+          ) : (
+            <Image
+              src="/placeholder.svg?height=200&width=400"
+              alt="Placeholder Image"
+              width={200}
+              height={150}
+              className="h-32 w-full object-cover"
+            />
+          )}
+          
 
           <Badge className="absolute left-1 top-1 bg-red-500 text-xs py-0 px-1.5">{property.tag}</Badge>
 
@@ -450,23 +387,36 @@ function PropertyCard({
           </div>
 
           <div className="mt-auto pt-1 flex flex-wrap gap-1">
-            {property.bhkOptions.slice(0, 2).map((option, index) => (
-              <Badge key={index} variant="outline" className="text-xs bg-red-50 text-red-700 border-red-100 px-1 py-0">
-                {option}
-              </Badge>
-            ))}
-          </div>
+  {Array.isArray(bhkOptionsArray) ? (
+    bhkOptionsArray.map((option, index) => (
+      <Badge
+        key={index}
+        variant="outline"
+        className="text-xs bg-red-50 text-red-700 border-red-100 px-1 py-0"
+      >
+        {option}
+      </Badge>
+    ))
+  ) : (
+    <span>No options available</span>
+  )}
+</div>
+
         </CardContent>
       </Card>
     )
   }
-
+const bhkOptionsArray = Array.isArray(property.bhkOptions)
+  ? property.bhkOptions
+  : typeof property.bhkOptions === "string"
+  ? JSON.parse(property.bhkOptions)
+  : [];
   return (
     <Card className="overflow-hidden shadow-sm border-gray-100">
       <div className="flex">
         <div className="relative w-1/3 flex-shrink-0">
           <Image
-            src={property.image || "/placeholder.svg"}
+             src={property.images[0] || "/placeholder.svg"}
             alt={property.title}
             width={150}
             height={150}
@@ -521,16 +471,21 @@ function PropertyCard({
           </div>
 
           <div className="flex flex-wrap gap-1 mb-2">
-            {property.bhkOptions.map((option, index) => (
-              <Badge
-                key={index}
-                variant="outline"
-                className="text-xs bg-red-50 text-red-700 border-red-100 px-1.5 py-0"
-              >
-                {option}
-              </Badge>
-            ))}
-          </div>
+  {Array.isArray(bhkOptionsArray) && bhkOptionsArray.length > 0 ? (
+    bhkOptionsArray.map((option, index) => (
+      <Badge
+        key={index}
+        variant="outline"
+        className="text-xs bg-red-50 text-red-700 border-red-100 px-1.5 py-0"
+      >
+        {option}
+      </Badge>
+    ))
+  ) : (
+    <span className="text-gray-500 text-sm">No options available</span>
+  )}
+</div>
+
 
           <div className="flex justify-between gap-2">
             <Button size="sm" className="bg-red-500 hover:bg-red-600 text-xs h-8 px-3 rounded-full flex-1">

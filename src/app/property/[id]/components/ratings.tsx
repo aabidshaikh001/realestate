@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { motion, AnimatePresence } from "framer-motion"
 
-// Define types for our data structure
 type Review = {
   id: number
   name: string
@@ -17,68 +16,37 @@ type Review = {
   review: string
 }
 
-type RatingsData = {
-  [propertyId: string]: Review[]
-}
-
-// Organize ratings by property ID
-const ratings: RatingsData = {
-  "prop-001": [
-    {
-      id: 1,
-      name: "Sameer Sharma",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "My wife and I had a dream of downsizing from our house in Cape Elizabeth into a small condo closer to where we work and play in Portland. David and his skilled team helped make that dream a reality. The sale went smoothly, and we just closed on an ideal new place we're excited to call home...",
-    },
-    {
-      id: 2,
-      name: "Sameer Sharma",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "My wife and I had a dream of downsizing from our house in Cape Elizabeth into a small condo closer to where we work and play in Portland. David and his skilled team helped make that dream a reality. The sale went smoothly, and we just closed on an ideal new place we're excited to call home...",
-    },
-    {
-      id: 3,
-      name: "Sakib Shaikh",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "My wife and I had a dream of downsizing from our house in Cape Elizabeth into a small condo closer to where we work and play in Portland. David and his skilled team helped make that dream a reality. The sale went smoothly, and we just closed on an ideal new place we're excited to call home...",
-    },
-  ],
-  "prop-002": [
-    {
-      id: 1,
-      name: "John Doe",
-      avatar: "/placeholder-user.jpg",
-      rating: 4,
-      review:
-        "The property was exactly what we were looking for. Great location and amenities. The agent was very helpful throughout the entire process...",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "/placeholder-user.jpg",
-      rating: 5,
-      review:
-        "Exceptional service from start to finish. The team was responsive and made our first home buying experience smooth and enjoyable...",
-    },
-  ],
-}
-
 interface RatingsProps {
   propertyId: string
 }
 
 export function Ratings({ propertyId }: RatingsProps) {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [expandedReview, setExpandedReview] = useState<number | null>(null)
   const router = useRouter()
 
-  // Get reviews for the current property ID or show empty array if not found
-  const propertyReviews = propertyId && ratings[propertyId] ? ratings[propertyId].slice(0, 2) : []
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/ratings/${propertyId}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch ratings")
+        }
+        const data = await response.json()
+        setReviews(data) // Assuming API returns an array of reviews
+      } catch (err) {
+        console.error("Error loading ratings:", err); // Logs the actual error for debugging
+        setError(`Failed to load ratings: ${err instanceof Error ? err.message : String(err)}`); // Uses the error
+      }
+       finally {
+        setLoading(false)
+      }
+    }
+
+    fetchReviews()
+  }, [propertyId])
 
   return (
     <Card className="border-0 shadow-sm bg-white">
@@ -93,8 +61,12 @@ export function Ratings({ propertyId }: RatingsProps) {
         </Button>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-4">
-        {propertyReviews.length > 0 ? (
-          propertyReviews.map((review) => (
+        {loading ? (
+          <p className="text-center text-gray-500">Loading...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : reviews.length > 0 ? (
+          reviews.slice(0, 2).map((review) => (
             <motion.div
               key={review.id}
               initial={{ opacity: 0, y: 20 }}
@@ -105,7 +77,7 @@ export function Ratings({ propertyId }: RatingsProps) {
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={review.avatar} alt={review.name} />
+                      <AvatarImage src={review.avatar || "/placeholder-user.jpg"} alt={review.name} />
                       <AvatarFallback>{review.name.substring(0, 2)}</AvatarFallback>
                     </Avatar>
                     <div>

@@ -1,23 +1,37 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { FaArrowLeft, FaShareAlt, FaHeart } from "react-icons/fa"
-
-// Dummy property data
-const propertyData: Record<string, { name: string; location: string }> = {
-  "prop-001": { name: "Luxury Villa", location: "Mumbai, India" },
-  "prop-002": { name: "Sea View Apartment", location: "Goa, India" },
-  "prop-003": { name: "Modern Penthouse", location: "Delhi, India" },
-}
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { FaArrowLeft, FaShareAlt, FaHeart } from "react-icons/fa";
 
 interface PropertyHeaderProps {
-  propertyId: string
+  propertyId: string;
 }
 
 export default function PropertyHeader({ propertyId }: PropertyHeaderProps) {
-  const router = useRouter()
-  const property = propertyData[propertyId] || { name: "Unknown Property", location: "Unknown Location" }
+  const router = useRouter();
+  const [property, setProperty] = useState<{ name: string; location: string }>({
+    name: "Loading...",
+    location: "Fetching location...",
+  });
 
+  useEffect(() => {
+    const fetchPropertyData = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/properties/${propertyId}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        setProperty({ name: data.name, location: data.location });
+      } catch (error) {
+        console.error("Error fetching property:", error);
+        setProperty({ name: "Unknown Property", location: "Unknown Location" });
+      }
+    };
+
+    fetchPropertyData();
+  }, [propertyId]);
+
+  
   return (
     <div className="sticky top-0 z-10 bg-white border-b">
       <div className="flex items-center justify-between p-4">
@@ -35,5 +49,5 @@ export default function PropertyHeader({ propertyId }: PropertyHeaderProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

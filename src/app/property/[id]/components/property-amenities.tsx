@@ -2,41 +2,36 @@
 
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { FaRulerCombined, FaBed, FaBath, FaParking } from "react-icons/fa"
+import { useEffect, useState } from "react";
 
 interface PropertyAmenitiesProps {
   propertyId: string
 }
 
-// Dummy amenities data based on property ID
-const getDummyAmenities = (id: string) => {
-  const amenities = {
-    "prop-001": [
-      { icon: FaRulerCombined, label: "2110 Sqft" },
-      { icon: FaBed, label: "3 Beds" },
-      { icon: FaBath, label: "1 Bath" },
-      { icon: FaParking, label: "1 Garage" },
-    ],
-    "prop-002": [
-      { icon: FaRulerCombined, label: "2500 Sqft" },
-      { icon: FaBed, label: "4 Beds" },
-      { icon: FaBath, label: "2 Baths" },
-      { icon: FaParking, label: "2 Garages" },
-    ],
-    "prop-003": [
-      { icon: FaRulerCombined, label: "1800 Sqft" },
-      { icon: FaBed, label: "2 Beds" },
-      { icon: FaBath, label: "1 Bath" },
-      { icon: FaParking, label: "1 Garage" },
-    ],
-  }
-
-  return amenities[id as keyof typeof amenities] || []
+interface Amenity {
+  icon: string;
+  label: string;
 }
 
 export default function PropertyAmenities({ propertyId }: PropertyAmenitiesProps) {
   const router = useRouter()
-  const amenities = getDummyAmenities(propertyId)
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+
+
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/amenities/${propertyId}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data: Amenity[] = await response.json();
+        setAmenities(data);
+      } catch (error) {
+        console.error("Error fetching amenities:", error);
+      } 
+    };
+
+    fetchAmenities();
+  }, [propertyId]);
 
   // Animation variants
   const containerVariants = {
@@ -55,7 +50,7 @@ export default function PropertyAmenities({ propertyId }: PropertyAmenitiesProps
       transition: { type: "spring", stiffness: 100 },
     },
   }
-
+ 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="p-4 border-b">
       <div className="flex justify-between items-center mb-4">
@@ -66,7 +61,7 @@ export default function PropertyAmenities({ propertyId }: PropertyAmenitiesProps
         {amenities.map((amenity, index) => (
           <motion.div key={index} variants={itemVariants} className="flex flex-col items-center">
             <div className="w-12 h-12 flex items-center justify-center mb-1">
-              <amenity.icon className="text-gray-500 text-xl" />
+              <amenity.icon  />
             </div>
             <span className="text-xs text-gray-700">{amenity.label}</span>
           </motion.div>

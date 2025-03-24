@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
@@ -7,38 +8,45 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { FaStore, FaUtensils, FaHospital, FaSubway } from "react-icons/fa"
 
-// Dummy location data based on property ID
-const getDummyLocationData = (id: string) => {
-  const locations = {
-    "prop-001": [
-      { icon: FaStore, label: "Mini Market", distance: "200m" },
-      { icon: FaUtensils, label: "Canteen", distance: "200m" },
-      { icon: FaHospital, label: "Hospital", distance: "200m" },
-      { icon: FaSubway, label: "Station", distance: "200m" },
-    ],
-    "prop-002": [
-      { icon: FaStore, label: "Mini Market", distance: "150m" },
-      { icon: FaUtensils, label: "Restaurant", distance: "300m" },
-      { icon: FaHospital, label: "Hospital", distance: "500m" },
-      { icon: FaSubway, label: "Station", distance: "1km" },
-    ],
-    "prop-003": [
-      { icon: FaStore, label: "Supermarket", distance: "100m" },
-      { icon: FaUtensils, label: "Food Court", distance: "250m" },
-      { icon: FaHospital, label: "Clinic", distance: "350m" },
-      { icon: FaSubway, label: "Bus Stop", distance: "150m" },
-    ],
-  }
+// Mapping API icons to React Icons (Ensure these match backend values)
+const iconMap: { [key: string]: JSX.Element } = {
+  store: <FaStore className="text-gray-500 text-xl" />,
+  restaurant: <FaUtensils className="text-gray-500 text-xl" />,
+  hospital: <FaHospital className="text-gray-500 text-xl" />,
+  subway: <FaSubway className="text-gray-500 text-xl" />,
+}
 
-  return locations[id as keyof typeof locations] || []
+interface Location {
+  id: number
+  icon: string
+  label: string
+  distance: string
 }
 
 export default function PropertyLocation() {
   const router = useRouter()
   const params = useParams()
   const propertyId = params.id as string
+  const [locations, setLocations] = useState<Location[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const locationData = getDummyLocationData(propertyId)
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await fetch(`https://apimobile-6zp8.onrender.com/api/location/${propertyId}`)
+        if (!res.ok) throw new Error("Failed to fetch data")
+
+        const data = await res.json()
+        setLocations(data) // Assuming the API returns an array of locations
+      } catch (error) {
+        console.error("Error fetching locations:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLocations()
+  }, [propertyId])
 
   return (
     <div className="min-h-screen bg-white">
@@ -55,18 +63,20 @@ export default function PropertyLocation() {
 
       {/* Main Content */}
       <main className="pt-16 pb-4 px-4">
-        {locationData.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-500 mt-10">Loading...</p>
+        ) : locations.length > 0 ? (
           <div className="space-y-4">
-            {locationData.map((location, index) => (
+            {locations.map((location) => (
               <motion.div
-                key={index}
+                key={location.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: 0.1 }}
                 className="bg-white border rounded-lg p-4 flex items-center gap-4"
               >
                 <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full">
-                  <location.icon className="text-gray-500 text-xl" />
+                  {iconMap[location.icon] || <FaStore className="text-gray-500 text-xl" />}
                 </div>
                 <div>
                   <h3 className="font-semibold">{location.label}</h3>
