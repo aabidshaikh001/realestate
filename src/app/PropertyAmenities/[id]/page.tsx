@@ -37,9 +37,11 @@ export default function PropertyAmenitiesPage() {
         }
         const data = await response.json()
         setAmenities(data.amenities)
-      } catch (err: any) {
-        setError(err.message)
-      } finally {
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError("Failed to load amenities. Please try again later.");
+      }
+      finally {
         setLoading(false)
       }
     }
