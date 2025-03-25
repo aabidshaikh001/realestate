@@ -2,16 +2,29 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, type FormEvent, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Mic, Building2, HomeIcon, Map, Store, ChevronRight, Share2, Home, Award, Clock } from "lucide-react"
+import { Search, Mic, Building2, HomeIcon, Map, Store, ChevronRight, Share2, Home, Award, Clock, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useRouter } from "next/navigation"
 import Header from "./component/header"
 import Footer from "./component/footer"
 
-// Property interface moved inside page.tsx
-export interface Property {
+type SpeechRecognitionType = {
+  new (): SpeechRecognition;
+  prototype: SpeechRecognition;
+};
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionType;
+    webkitSpeechRecognition: SpeechRecognitionType;
+  }
+}
+
+
+interface Property {
   id: string
   title: string
   location: string
@@ -25,122 +38,106 @@ export interface Property {
   bhkOptions: string[]
 }
 
-// PropertyCard component moved inside page.tsx
 function PropertyCard({ property }: { property: Property }) {
-  const bhkOptions = typeof property.bhkOptions === "string"
-  ? JSON.parse(property.bhkOptions) 
-  : [];
-  const imagesArray: string[] = Array.isArray(property.images)
-  ? property.images
-  : JSON.parse(property.images || "[]");
-
+  const bhkOptions = typeof property.bhkOptions === "string" ? JSON.parse(property.bhkOptions) : []
+  const imagesArray: string[] = Array.isArray(property.images) ? property.images : JSON.parse(property.images || "[]")
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 max-w-sm">
       <div className="relative">
-      {imagesArray.length > 0 ? (
-  <Image
-    src={imagesArray[0]} // Display the first image
-    alt={property.title}
-    width={400}
-    height={200}
-    className="w-full h-[180px] object-cover"
-  />
-) : (
-  <Image
-    src="/placeholder.svg?height=200&width=400"
-    alt="Placeholder Image"
-    width={400}
-    height={200}
-    className="w-full h-[180px] object-cover"
-  />
-)}
+        {imagesArray.length > 0 ? (
+          <Image
+            src={imagesArray[0] || "/placeholder.svg"}
+            alt={property.title}
+            width={400}
+            height={200}
+            className="w-full h-[180px] object-cover"
+          />
+        ) : (
+          <Image
+            src="/placeholder.svg?height=200&width=400"
+            alt="Placeholder Image"
+            width={400}
+            height={200}
+            className="w-full h-[180px] object-cover"
+          />
+        )}
 
-     
-             {/* Brokerage Tag */}
-             <div className="absolute top-3 left-3">
-               <span className="bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                 {property.brokerage}
-               </span>
-             </div>
-     
-             {/* Best Seller Tag */}
-             <div className="absolute top-3 right-3">
-               <span className="bg-amber-400 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
-                 <Award className="w-3 h-3" />
-                 {property.tag}
-               </span>
-             </div>
-     
-             {/* Ready to Move Tag */}
-             {property.readyToMove && (
-               <div className="absolute bottom-3 left-3">
-                 <span className="bg-black/70 text-white text-xs font-medium px-3 py-1 rounded-md flex items-center gap-1">
-                   <Clock className="w-3 h-3" />
-                   Ready to Move
-                 </span>
-               </div>
-             )}
-           </div>
-     
-           <div className="p-4">
-             {/* Property Details */}
-             <div className="flex justify-between items-start">
-               <div>
-                 <h3 className="font-bold text-lg text-gray-800">{property.title}</h3>
-                 <p className="text-sm text-gray-500 mt-1">{property.location}</p>
-               </div>
-               <button className="text-gray-400 hover:text-gray-600">
-                 <Share2 size={18} />
-               </button>
-             </div>
-     
-             {/* BHK Options */}
-             <div className="flex gap-2 mt-4">
-             {Array.isArray(bhkOptions) ? (
-  bhkOptions.map((option, index) => (
-    <div key={index} className="flex flex-col items-center">
-      <div className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md">
-        <Home size={16} className="text-gray-500" />
+        <div className="absolute top-3 left-3">
+          <span className="bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">{property.brokerage}</span>
+        </div>
+
+        <div className="absolute top-3 right-3">
+          <span className="bg-amber-400 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+            <Award className="w-3 h-3" />
+            {property.tag}
+          </span>
+        </div>
+
+        {property.readyToMove && (
+          <div className="absolute bottom-3 left-3">
+            <span className="bg-black/70 text-white text-xs font-medium px-3 py-1 rounded-md flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Ready to Move
+            </span>
+          </div>
+        )}
       </div>
-      <span className="text-xs text-gray-600 mt-1">{option}</span>
+
+      <div className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-bold text-lg text-gray-800">{property.title}</h3>
+            <p className="text-sm text-gray-500 mt-1">{property.location}</p>
+          </div>
+          <button className="text-gray-400 hover:text-gray-600">
+            <Share2 size={18} />
+          </button>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          {Array.isArray(bhkOptions) ? (
+            bhkOptions.map((option, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md">
+                  <Home size={16} className="text-gray-500" />
+                </div>
+                <span className="text-xs text-gray-600 mt-1">{option}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No BHK options available</p>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-bold text-xl text-gray-900">{property.price}</h4>
+              <p className="text-xs text-gray-500 mt-1">{property.discount}</p>
+            </div>
+            <div>
+              <Link href={`/property/${property.id}`}>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">Book Visit</Button>
+                </motion.div>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {property.visitBonus && (
+          <div className="mt-3">
+            <span className="bg-red-100 text-red-600 text-xs font-medium px-3 py-1 rounded-md">
+              {property.visitBonus}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
-  ))
-) : (
-  <p className="text-sm text-gray-500">No BHK options available</p>
-)}
-             </div>
-     
-             {/* Price and Discount */}
-             <div className="mt-4">
-               <div className="flex items-center justify-between">
-                 <div>
-                   <h4 className="font-bold text-xl text-gray-900">{property.price}</h4>
-                   <p className="text-xs text-gray-500 mt-1">{property.discount}</p>
-                 </div>
-                 <div>
-                 <Link href={`/property/${property.id}`}>
-                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                       <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">Book Visit</Button>
-                     </motion.div>
-                   </Link>        </div>
-               </div>
-             </div>
-     
-             {/* Visit Bonus */}
-             {property.visitBonus && (
-               <div className="mt-3">
-                 <span className="bg-red-100 text-red-600 text-xs font-medium px-3 py-1 rounded-md">
-                   {property.visitBonus}
-                 </span>
-               </div>
-             )}
-           </div>
-         </div>
   )
 }
 
-// Array of images for the banner
 const bannerImages = [
   "https://destinationcompress.s3.ap-south-1.amazonaws.com/d939795c-e1c2-4e56-9bc5-16d7b9f6f35f.jpg",
   "https://cbvalueaddrealty.in/wp-content/uploads/2021/07/Raffles-Park-Luxury-Villa.jpg",
@@ -149,33 +146,103 @@ const bannerImages = [
 
 export default function HomeMain() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isListening, setIsListening] = useState(false)
+  const [voiceError, setVoiceError] = useState("")
+  const router = useRouter()
 
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const response = await fetch("https://apimobile-6zp8.onrender.com/api/properties"); // Replace with your actual API endpoint
-        const data = await response.json();
-        setProperties(data);
+        const response = await fetch("https://apimobile-6zp8.onrender.com/api/properties")
+        const data = await response.json()
+        setProperties(data)
       } catch (error) {
-        console.error("Error fetching properties:", error);
+        console.error("Error fetching properties:", error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchProperties();
-  }, []);
+    fetchProperties()
+  }, [])
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerImages.length)
-    }, 3000) // Change image every 3 seconds
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition()
+        recognitionRef.current.continuous = false
+        recognitionRef.current.interimResults = false
+        recognitionRef.current.lang = 'en-US'
+        
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript
+          setSearchTerm(transcript)
+          setIsListening(false)
+          
+          if (transcript.trim()) {
+            router.push(`/Properties/${encodeURIComponent(transcript.trim())}`)
+          }
+        }
+        
+        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error('Speech recognition error', event.error)
+          setVoiceError(`Error: ${event.error}`)
+          setIsListening(false)
+        }
+        
+        recognitionRef.current.onend = () => {
+          setIsListening(false)
+        }
+      } else {
+        setVoiceError("Your browser doesn't support speech recognition")
+      }
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+      }
+    }
+  }, [router])
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault()
+    if (searchTerm.trim()) {
+      router.push(`/Properties/${encodeURIComponent(searchTerm.trim())}`)
+    }
+  }
+
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+      }
+      setIsListening(false)
+    } else {
+      setVoiceError("")
+      if (recognitionRef.current) {
+        recognitionRef.current.start()
+        setIsListening(true)
+      } else {
+        setVoiceError("Speech recognition not available")
+      }
+    }
+  }
 
   return (
     <motion.div
@@ -185,32 +252,50 @@ export default function HomeMain() {
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-gray-50 pb-16"
     >
-      {/* Header */}
       <Header />
 
-      {/* Search Bar */}
       <motion.div
         className="p-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="relative">
+        <form onSubmit={handleSearch} className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input placeholder="Search here..." className="pl-10 pr-10 rounded-full border-gray-200" />
+          <Input 
+            placeholder={isListening ? "Listening..." : "Search here..."} 
+            className={`pl-10 pr-10 rounded-full border-gray-200 ${isListening ? 'bg-red-50' : ''}`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
           <motion.div
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             className="absolute right-2 top-1/2 transform -translate-y-1/2"
           >
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Mic className="h-4 w-4" />
+            <Button 
+              type="button" 
+              onClick={toggleListening}
+              variant="ghost" 
+              size="icon" 
+              className={`h-8 w-8 ${isListening ? 'text-red-500' : ''}`}
+            >
+              {isListening ? <X className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </Button>
           </motion.div>
-        </div>
+        </form>
+        
+        {voiceError && (
+          <p className="text-red-500 text-xs mt-1 ml-2">{voiceError}</p>
+        )}
+        
+        {isListening && (
+          <div className="text-center mt-2">
+            <p className="text-sm text-gray-600">Speak now...</p>
+          </div>
+        )}
       </motion.div>
 
-      {/* Featured Banner */}
       <motion.div
         className="relative h-48 mx-4 rounded-lg overflow-hidden mb-6"
         initial={{ opacity: 0, scale: 0.95 }}
@@ -251,7 +336,6 @@ export default function HomeMain() {
         </motion.div>
       </motion.div>
 
-      {/* Categories */}
       <motion.div className="px-4 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Categories</h3>
@@ -282,7 +366,6 @@ export default function HomeMain() {
         </div>
       </motion.div>
 
-      {/* Promoted Properties */}
       <motion.div className="px-4 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Promoted Property</h3>
@@ -313,9 +396,7 @@ export default function HomeMain() {
         )}
       </motion.div>
 
-      {/* Footer */}
       <Footer />
     </motion.div>
   )
 }
-

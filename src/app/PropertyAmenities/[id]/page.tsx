@@ -2,39 +2,21 @@
 
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { FaArrowLeft } from "react-icons/fa"
 import { FaRulerCombined, FaBed, FaBath, FaParking } from "react-icons/fa"
 
-type Amenity = {
-  icon: React.ElementType
-  label: string
+const iconMap: Record<string, React.ElementType> = {
+  sqft: FaRulerCombined,
+  beds: FaBed,
+  baths: FaBath,
+  parking: FaParking,
 }
 
-// Dummy amenities data based on property ID
-const getDummyAmenities = (id: string): Amenity[] => {
-  const amenities: Record<string, Amenity[]> = {
-    "prop-001": [
-      { icon: FaRulerCombined, label: "2110 Sqft" },
-      { icon: FaBed, label: "3 Beds" },
-      { icon: FaBath, label: "1 Bath" },
-      { icon: FaParking, label: "1 Garage" },
-    ],
-    "prop-002": [
-      { icon: FaRulerCombined, label: "2500 Sqft" },
-      { icon: FaBed, label: "4 Beds" },
-      { icon: FaBath, label: "2 Baths" },
-      { icon: FaParking, label: "2 Garages" },
-    ],
-    "prop-003": [
-      { icon: FaRulerCombined, label: "1800 Sqft" },
-      { icon: FaBed, label: "2 Beds" },
-      { icon: FaBath, label: "1 Bath" },
-      { icon: FaParking, label: "1 Garage" },
-    ],
-  }
-
-  return amenities[id] || []
+type Amenity = {
+  iconKey: string
+  label: string
 }
 
 export default function PropertyAmenitiesPage() {
@@ -42,7 +24,27 @@ export default function PropertyAmenitiesPage() {
   const params = useParams()
   const propertyId = params.id as string
 
-  const amenities = getDummyAmenities(propertyId)
+  const [amenities, setAmenities] = useState<Amenity[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/amenities/${propertyId}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch amenities")
+        }
+        const data = await response.json()
+        setAmenities(data.amenities)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAmenities()
+  }, [propertyId])
 
   return (
     <div className="min-h-screen bg-white">
@@ -58,7 +60,11 @@ export default function PropertyAmenitiesPage() {
 
       {/* Main content */}
       <main className="pt-16 pb-4 px-4">
-        {amenities.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-500">Loading amenities...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : amenities.length > 0 ? (
           <motion.div
             initial="hidden"
             animate="visible"
@@ -68,21 +74,24 @@ export default function PropertyAmenitiesPage() {
             }}
             className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
           >
-            {amenities.map((amenity, index) => (
-              <motion.div
-                key={index}
-                variants={{
-                  hidden: { y: 20, opacity: 0 },
-                  visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } },
-                }}
-                className="flex flex-col items-center p-4 border rounded-lg shadow-sm"
-              >
-                <div className="w-12 h-12 flex items-center justify-center mb-2">
-                  <amenity.icon className="text-gray-500 text-2xl" />
-                </div>
-                <span className="text-sm text-gray-700 font-medium">{amenity.label}</span>
-              </motion.div>
-            ))}
+            {amenities.map((amenity, index) => {
+              const Icon = iconMap[amenity.iconKey] || FaRulerCombined
+              return (
+                <motion.div
+                  key={index}
+                  variants={{
+                    hidden: { y: 20, opacity: 0 },
+                    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } },
+                  }}
+                  className="flex flex-col items-center p-4 border rounded-lg shadow-sm"
+                >
+                  <div className="w-12 h-12 flex items-center justify-center mb-2">
+                    <Icon className="text-gray-500 text-2xl" />
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium">{amenity.label}</span>
+                </motion.div>
+              )
+            })}
           </motion.div>
         ) : (
           <p className="text-center text-gray-500">No amenities available for this property.</p>
