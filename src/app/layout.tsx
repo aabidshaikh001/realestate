@@ -4,6 +4,7 @@ import "./globals.css";
 import ClientWrapper from "./component/ClientWrapper"; // Import the ClientWrapper
 import { AuthProvider } from "@/providers/auth-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"; // Adjust the import path as needed
+import { ToastContainer } from "react-toastify";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,7 +34,13 @@ export default function RootLayout({
       > <AuthProvider>
         <TooltipProvider>
         {/* Wrap children with ClientWrapper */}
-        <ClientWrapper>{children}</ClientWrapper>
+        <ClientWrapper>
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+           
+          />
+          {children}</ClientWrapper>
         </TooltipProvider>
         </AuthProvider>
       </body>

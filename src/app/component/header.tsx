@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { CgProfile } from "react-icons/cg"
-import { IoNotificationsCircleOutline } from "react-icons/io5"
+import { BellRing } from "lucide-react" // Updated icon for a more professional look
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/providers/auth-provider"
 import { useRouter } from "next/navigation"
@@ -50,13 +50,9 @@ export default function Header() {
   }
 
   const handleNotificationsClick = () => {
-    // Reset notification count when clicked
-    setNotificationCount(0)
-    // Here you would typically open a notifications panel
-    // For now, we'll just alert
+    setNotificationCount(0) // Reset count when clicked
     alert("Notifications panel would open here")
   }
-
  
 
   return (
@@ -90,22 +86,20 @@ export default function Header() {
       <div className="flex gap-4 items-center">
      
 
-        {/* Notifications */}
-        <Tooltip>
+         {/* Notifications */}
+         <Tooltip>
           <TooltipTrigger asChild>
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button variant="ghost" size="icon" onClick={handleNotificationsClick}>
-                <div className="relative">
-                  <IoNotificationsCircleOutline className="h-7 w-7" />
-                  {notificationCount > 0 && (
-                    <Badge
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500"
-                      variant="destructive"
-                    >
-                      {notificationCount}
-                    </Badge>
-                  )}
-                </div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="relative">
+              <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
+                <BellRing className="h-7 w-7 text-gray-700 dark:text-white" />
+                {notificationCount > 0 && (
+                  <Badge
+                    className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center bg-red-600 text-white text-xs font-bold shadow-md"
+                    variant="destructive"
+                  >
+                    {notificationCount}
+                  </Badge>
+                )}
               </Button>
             </motion.div>
           </TooltipTrigger>

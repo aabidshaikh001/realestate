@@ -83,16 +83,27 @@ const createBooking = async (data: {
   timeSlot: string
   country?: string
 }): Promise<{ success: boolean; bookingId: string }> => {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+  try {
+    const response = await fetch("https://apimobile-6zp8.onrender.com/api/booking", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
 
-  // Log the data (this uses the parameter and prevents the unused variable error)
-  console.log("Booking data:", data)
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
 
-  // For demo purposes, always return success
-  return {
-    success: true,
-    bookingId: `BK-${Date.now()}`,
+    const result = await response.json()
+    return {
+      success: true,
+      bookingId: result.bookingId || `BK-${Date.now()}`,
+    }
+  } catch (error) {
+    console.error("Error creating booking:", error)
+    throw error
   }
 }
 
@@ -213,15 +224,18 @@ export default function BookingModal({ isOpen, onClose, propertyId, propertyName
       }
 
       // Call booking service
-      const result = await createBooking(bookingData)
+      try {
+        const result = await createBooking(bookingData)
 
-      if (result.success) {
-        toast.success(
-          `Booking Successful! Your visit has been scheduled for ${format(formData.date!, "PPP")} at ${formData.timeSlot}. Booking ID: ${result.bookingId}`,
-        )
-        onClose()
-      } else {
-        throw new Error("Booking failed")
+        if (result.success) {
+          toast.success(
+            `Booking Successful! Your visit has been scheduled for ${format(formData.date!, "PPP")} at ${formData.timeSlot}. Booking ID: ${result.bookingId}`,
+          )
+          onClose()
+        }
+      } catch (error) {
+        console.error("Booking failed:", error)
+        toast.error("Booking failed. Please try again later.")
       }
     } finally {
       setLoading(false)
@@ -235,7 +249,7 @@ export default function BookingModal({ isOpen, onClose, propertyId, propertyName
 
   return (
     <AnimatePresence>
-      <ToastContainer/>
+      <ToastContainer />
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           {/* Backdrop */}
@@ -249,22 +263,22 @@ export default function BookingModal({ isOpen, onClose, propertyId, propertyName
 
           {/* Bottom Sheet */}
           <motion.div
-  className="absolute inset-x-0 bottom-0 w-full bg-white rounded-t-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
-  style={{ maxHeight: "90vh", touchAction: "pan-y" }}
-  initial={{ y: "100%" }}
-  animate={{ y: 0 }}
-  exit={{ y: "100%" }}
-  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-  onClick={(e) => e.stopPropagation()}
-  drag={!isOpen ? "y" : false}
-  dragConstraints={{ top: 0 }}
-  dragElastic={0.2}
-  onDragEnd={(_, info) => {
-    if (info.offset.y > 100) {
-      onClose();
-    }
-  }}
->
+            className="absolute inset-x-0 bottom-0 w-full bg-white rounded-t-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            style={{ maxHeight: "90vh", touchAction: "pan-y" }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+            drag={!isOpen ? "y" : false}
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 100) {
+                onClose()
+              }
+            }}
+          >
             {/* Drag handle */}
             <div className="flex justify-center pt-2 pb-1">
               <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
