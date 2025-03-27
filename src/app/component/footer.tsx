@@ -7,7 +7,8 @@ import { MdCurrencyRupee } from "react-icons/md"
 import { BsBuildingsFill } from "react-icons/bs"
 import EMICalculator from "./emi-calculator"
 import RaiseQuerySheet from "./raise-query-sheet"
-
+import BookingModal from "../property/[id]/components/booking-modal"
+import AddCustomerSheet from "./add-customer-sheet"
 export default function Footer() {
   const pathname = usePathname()
   const router = useRouter()
@@ -15,12 +16,14 @@ export default function Footer() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isEmiCalculatorOpen, setIsEmiCalculatorOpen] = useState(false)
   const [isRaiseQueryOpen, setIsRaiseQueryOpen] = useState(false)
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
 
   const navItems = useMemo(
     () => [
       { name: "Home", icon: HomeIcon, id: "home", href: "/" },
       { name: "Properties", icon: BsBuildingsFill, id: "Properties", href: "/Properties" },
-      { name: "Visit", icon: Plus, id: "visit", href: "#" },
+      { name: "", icon: Plus, id: "visit", href: "#" },
       { name: "Revenue", icon: MdCurrencyRupee, id: "Revenue", href: "/Revenue" },
       { name: "Profile", icon: Menu, id: "profile", href: "/profile" },
     ],
@@ -39,7 +42,13 @@ export default function Footer() {
       setIsEmiCalculatorOpen(true)
     } else if (href === "/raise-query") {
       setIsRaiseQueryOpen(true)
-    } else {
+    }else if (href === "/add-customer") {
+      setIsAddCustomerOpen(true)
+    } 
+
+    else if (href === "/book-visit") {
+      setIsBookingModalOpen(true)
+    }else {
       router.push(href)
     }
     setIsMenuOpen(false)
@@ -102,6 +111,9 @@ export default function Footer() {
 
       {/* Raise Query Sheet */}
       <RaiseQuerySheet isOpen={isRaiseQueryOpen} onClose={() => setIsRaiseQueryOpen(false)} />
+      <BookingModal isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} isFromFooter={true} />
+        
+      <AddCustomerSheet isOpen={isAddCustomerOpen} onClose={() => setIsAddCustomerOpen(false)} />
     </>
   )
 }
