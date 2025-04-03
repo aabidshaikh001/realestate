@@ -94,7 +94,7 @@ export default function AddCustomerSheet({ isOpen, onClose }: AddCustomerSheetPr
       }
 
       // Call your API to create customer
-      const response = await fetch("https://apimobile-6zp8.onrender.com/api/customer", { 
+      const response = await fetch("https://api.realestatecompany.co.in/api/customer", { 
         method: "POST",
         headers: {
           "Content-Type": "application/json",

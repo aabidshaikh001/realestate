@@ -16,7 +16,7 @@ export default function AboutProjectPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`https://apimobile-6zp8.onrender.com/api/aboutproperty/${propertyId}`)
+        const res = await fetch(`https://api.realestatecompany.co.in/api/aboutproperty/${propertyId}`)
         const data = await res.json()
         setAboutData(data.description)
       } catch (error) {

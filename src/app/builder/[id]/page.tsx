@@ -37,7 +37,7 @@ export default function BuilderDetailsPage() {
     const fetchBuilderDetails = async () => {
       setLoading(true)
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/builderdetails/${id}`)
+        const response = await fetch(`https://api.realestatecompany.co.in/api/builderdetails/${id}`)
         if (!response.ok) throw new Error("Failed to fetch builder details")
         const data: BuilderDetails = await response.json()
         setBuilderData(data)

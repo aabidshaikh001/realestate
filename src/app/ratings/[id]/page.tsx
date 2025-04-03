@@ -27,7 +27,7 @@ export default function RatingsPage() {
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const res = await fetch(`https://apimobile-6zp8.onrender.com/api/ratings/${propertyId}`)
+        const res = await fetch(`https://api.realestatecompany.co.in/api/ratings/${propertyId}`)
         if (!res.ok) throw new Error("Failed to fetch ratings")
 
         const data = await res.json()

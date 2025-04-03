@@ -23,7 +23,7 @@ export default function PropertyLoanInfo({ propertyId }: PropertyLoanInfoProps) 
   useEffect(() => {
     const fetchLoanInfo = async () => {
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/bankinfo/${propertyId}`)
+        const response = await fetch(`https://api.realestatecompany.co.in/api/bankinfo/${propertyId}`)
         if (!response.ok) {
           throw new Error("Failed to fetch loan info")
         }

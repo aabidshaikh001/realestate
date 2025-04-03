@@ -33,7 +33,7 @@ export default function PropertyLocation() {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const res = await fetch(`https://apimobile-6zp8.onrender.com/api/location/${propertyId}`)
+        const res = await fetch(`https://api.realestatecompany.co.in/api/location/${propertyId}`)
         if (!res.ok) throw new Error("Failed to fetch data")
 
         const data = await res.json()

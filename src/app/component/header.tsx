@@ -49,11 +49,11 @@ export default function Header() {
     router.push("/profile")
   }
 
+ 
   const handleNotificationsClick = () => {
     setNotificationCount(0) // Reset count when clicked
-    alert("Notifications panel would open here")
+    router.push("/notifications") // Navigate to notifications page instead of showing alert
   }
- 
 
   return (
     <motion.header
@@ -88,26 +88,26 @@ export default function Header() {
 
          {/* Notifications */}
          <Tooltip>
-          <TooltipTrigger asChild>
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="relative">
-              <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
-                <BellRing className="h-7 w-7 text-gray-700 dark:text-white" />
-                {notificationCount > 0 && (
-                  <Badge
-                    className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center bg-red-600 text-white text-xs font-bold shadow-md"
-                    variant="destructive"
-                  >
-                    {notificationCount}
-                  </Badge>
-                )}
-              </Button>
-            </motion.div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Notifications</p>
-          </TooltipContent>
-        </Tooltip>
-
+            <TooltipTrigger asChild>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="relative">
+                <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
+                  <BellRing className="h-7 w-7 text-gray-700 dark:text-white" />
+                  {notificationCount > 0 && (
+                    <Badge
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center bg-red-600 text-white text-xs font-bold shadow-md"
+                      variant="destructive"
+                    >
+                      {notificationCount}
+                    </Badge>
+                  )}
+                </Button>
+              </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Notifications</p>
+            </TooltipContent>
+          </Tooltip>
+          
         {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

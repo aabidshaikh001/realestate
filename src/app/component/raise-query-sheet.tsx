@@ -50,7 +50,7 @@ export default function RaiseQuerySheet({ isOpen, onClose }: RaiseQuerySheetProp
     setIsSubmitting(true);
   
     try {
-      const response = await fetch("https://apimobile-6zp8.onrender.com/api/query", {
+      const response = await fetch("https://api.realestatecompany.co.in/api/query", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

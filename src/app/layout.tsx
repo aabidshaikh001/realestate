@@ -5,7 +5,7 @@ import ClientWrapper from "./component/ClientWrapper"; // Import the ClientWrapp
 import { AuthProvider } from "@/providers/auth-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"; // Adjust the import path as needed
 import { ToastContainer } from "react-toastify";
-
+import ScrollToTop from "./component/ScrollToTop";
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -40,7 +40,9 @@ export default function RootLayout({
             autoClose={5000}
            
           />
-          {children}</ClientWrapper>
+          {children}
+          <ScrollToTop/>
+          </ClientWrapper>
         </TooltipProvider>
         </AuthProvider>
       </body>

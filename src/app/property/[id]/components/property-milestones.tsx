@@ -21,7 +21,7 @@ export default function PropertyMilestones({ propertyId }: PropertyMilestonesPro
   useEffect(() => {
     const fetchMilestoneData = async () => {
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/milestone/${propertyId}`)
+        const response = await fetch(`https://api.realestatecompany.co.in/api/milestone/${propertyId}`)
         if (!response.ok) {
           throw new Error("Failed to fetch milestone data")
         }

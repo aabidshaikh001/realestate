@@ -21,7 +21,7 @@ export default function PropertyCTA({ propertyId }: PropertyCTAProps) {
   useEffect(() => {
     const fetchCTAData = async () => {
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/properties/${propertyId}`);
+        const response = await fetch(`https://api.realestatecompany.co.in/api/properties/${propertyId}`);
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         setCtaData(data || { price: "₹ 4.50 L - 7.25 Cr", discount: "Special offer: 8% discount" });

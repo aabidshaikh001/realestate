@@ -20,7 +20,7 @@ export function BrochureCard({ propertyId }: BrochureCardProps) {
     const fetchBrochure = async () => {
      
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/brochure/${propertyId}`)
+        const response = await fetch(`https://api.realestatecompany.co.in/api/brochure/${propertyId}`)
         if (!response.ok) throw new Error("Failed to fetch brochure")
         const data = await response.json()
         setBrochure(data)

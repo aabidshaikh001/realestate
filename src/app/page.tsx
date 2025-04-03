@@ -12,17 +12,16 @@ import Header from "./component/header"
 import Footer from "./component/footer"
 
 type SpeechRecognitionType = {
-  new (): SpeechRecognition;
-  prototype: SpeechRecognition;
-};
+  new (): SpeechRecognition
+  prototype: SpeechRecognition
+}
 
 declare global {
   interface Window {
-    SpeechRecognition: SpeechRecognitionType;
-    webkitSpeechRecognition: SpeechRecognitionType;
+    SpeechRecognition: SpeechRecognitionType
+    webkitSpeechRecognition: SpeechRecognitionType
   }
 }
-
 
 interface Property {
   id: string
@@ -158,7 +157,7 @@ export default function HomeMain() {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const response = await fetch("https://apimobile-6zp8.onrender.com/api/properties")
+        const response = await fetch("https://api.realestatecompany.co.in/api/properties")
         const data = await response.json()
         setProperties(data)
       } catch (error) {
@@ -180,39 +179,39 @@ export default function HomeMain() {
   }, [])
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      
+
       if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition()
-        recognitionRef.current.continuous = false
-        recognitionRef.current.interimResults = false
-        recognitionRef.current.lang = 'en-US'
+        const recognition = new SpeechRecognition()
+        recognitionRef.current = recognition
+        recognition.continuous = false
+        recognition.interimResults = false
+        recognition.lang = "en-US"
+
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript;
+          setSearchTerm(transcript);
+          setIsListening(false);
         
-        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-          const transcript = event.results[0][0].transcript
-          setSearchTerm(transcript)
-          setIsListening(false)
-          
           if (transcript.trim()) {
-            router.push(`/Properties/${encodeURIComponent(transcript.trim())}`)
+            router.push(`/Properties/${encodeURIComponent(transcript.trim())}`);
           }
-        }
+        };
         
-        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error('Speech recognition error', event.error)
-          setVoiceError(`Error: ${event.error}`)
-          setIsListening(false)
-        }
-        
-        recognitionRef.current.onend = () => {
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error("Speech recognition error", event.error);
+          setVoiceError(`Error: ${event.error}`);
+          setIsListening(false);
+        };
+                recognition.onend = () => {
           setIsListening(false)
         }
       } else {
         setVoiceError("Your browser doesn't support speech recognition")
       }
     }
-    
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort()
@@ -255,46 +254,106 @@ export default function HomeMain() {
       <Header />
 
       <motion.div
-        className="p-4"
+        className="p-4 max-w-3xl mx-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input 
-            placeholder={isListening ? "Listening..." : "Search here..."} 
-            className={`pl-10 pr-10 rounded-full border-gray-200 ${isListening ? 'bg-red-50' : ''}`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2"
-          >
-            <Button 
-              type="button" 
-              onClick={toggleListening}
-              variant="ghost" 
-              size="icon" 
-              className={`h-8 w-8 ${isListening ? 'text-red-500' : ''}`}
+        <form onSubmit={handleSearch} className="relative flex items-center w-full">
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder={isListening ? "Listening..." : "Search here..."}
+              className={`pl-10 pr-10 h-10 rounded-l-full md:rounded-l-full border-gray-200 ${isListening ? "bg-red-50" : ""}`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2"
             >
-              {isListening ? <X className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              <Button
+                type="button"
+                onClick={toggleListening}
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 ${isListening ? "text-red-500" : ""}`}
+              >
+                {isListening ? <X className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
+            </motion.div>
+          </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button type="submit" className="bg-red-500 hover:bg-red-600 text-white h-10 rounded-r-full">
+              <Search className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">Search</span>
             </Button>
           </motion.div>
         </form>
-        
-        {voiceError && (
-          <p className="text-red-500 text-xs mt-1 ml-2">{voiceError}</p>
-        )}
-        
-        {isListening && (
-          <div className="text-center mt-2">
-            <p className="text-sm text-gray-600">Speak now...</p>
-          </div>
-        )}
+
+        {voiceError && <p className="text-red-500 text-xs mt-1 ml-2">{voiceError}</p>}
       </motion.div>
+
+      {/* Voice Listening Modal */}
+      <AnimatePresence>
+        {isListening && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center"
+          >
+            <div className="absolute top-4 right-4">
+              <Button variant="ghost" size="icon" onClick={toggleListening} className="text-white hover:bg-white/10">
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+
+            <motion.h2
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="text-white text-xl mb-16"
+            >
+              Listening...
+            </motion.h2>
+
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="relative"
+            >
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.8, 0.5],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse",
+                }}
+                className="absolute inset-0 bg-red-500/30 rounded-full"
+                style={{ padding: "30px" }}
+              />
+              <motion.div
+                whileTap={{ scale: 0.95 }}
+                className="relative bg-red-500 rounded-full p-6 cursor-pointer"
+                onClick={toggleListening}
+              >
+                <Mic className="h-8 w-8 text-white" />
+              </motion.div>
+            </motion.div>
+
+            {voiceError && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 mt-8">
+                {voiceError}
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div
         className="relative h-48 mx-4 rounded-lg overflow-hidden mb-6"
@@ -342,10 +401,10 @@ export default function HomeMain() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {[
-            { name: "Flats / Apartment", icon: Building2 },
-            { name: "Farmhouse / Villa", icon: HomeIcon },
-            { name: "Plots / Lands", icon: Map },
-            { name: "Commercial", icon: Store },
+            { name: "Flats / Apartment", icon: Building2, slug: "flat-apartment" },
+            { name: "Farmhouse / Villa", icon: HomeIcon, slug: "farmhouse-villa" },
+            { name: "Plots / Lands", icon: Map, slug: "plots-land" },
+            { name: "Commercial", icon: Store, slug: "commercial" },
           ].map((category, index) => (
             <motion.div
               key={category.name}
@@ -355,7 +414,10 @@ export default function HomeMain() {
               whileHover={{ scale: 1.05, backgroundColor: "#f0f7ff" }}
               whileTap={{ scale: 0.98 }}
             >
-              <Link href="#" className="bg-white p-4 rounded-lg flex items-center gap-3 shadow-sm h-full">
+              <Link
+                href={`/Properties/${category.slug}`}
+                className="bg-white p-4 rounded-lg flex items-center gap-3 shadow-sm h-full"
+              >
                 <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
                   <category.icon className="h-5 w-5" />
                 </div>
@@ -369,7 +431,7 @@ export default function HomeMain() {
       <motion.div className="px-4 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Promoted Property</h3>
-          <Link href="#" className="text-sm text-red-500 flex items-center">
+          <Link href="/Properties" className="text-sm text-red-500 flex items-center">
             View All
             <ChevronRight className="h-4 w-4 ml-1" />
           </Link>
@@ -400,3 +462,4 @@ export default function HomeMain() {
     </motion.div>
   )
 }
+

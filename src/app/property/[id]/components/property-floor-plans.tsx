@@ -21,7 +21,7 @@ export default function PropertyFloorPlans({ propertyId }: PropertyFloorPlansPro
   useEffect(() => {
     const fetchFloorPlan = async () => {
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/floorplan/${propertyId}`);
+        const response = await fetch(`https://api.realestatecompany.co.in/api/floorplan/${propertyId}`);
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         setFloorPlan(data || null); // Set single object instead of array

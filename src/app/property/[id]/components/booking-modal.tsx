@@ -94,7 +94,7 @@
     country?: string
   }): Promise<{ success: boolean; bookingId: string }> => {
     try {
-      const response = await fetch("https://apimobile-6zp8.onrender.com/api/booking", {
+      const response = await fetch("https://api.realestatecompany.co.in/api/booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

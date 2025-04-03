@@ -23,7 +23,7 @@ export function AboutBuilder({ propertyId }: AboutBuilderProps) {
     const fetchBuilderDetails = async () => {
     
       try {
-        const response = await fetch(`https://apimobile-6zp8.onrender.com/api/builder-details/${propertyId}`)
+        const response = await fetch(`https://api.realestatecompany.co.in/api/builder-details/${propertyId}`)
         if (!response.ok) throw new Error("Failed to fetch builder details")
         const data = await response.json()
         setBuilderDescription(data?.overview || "No details available.")

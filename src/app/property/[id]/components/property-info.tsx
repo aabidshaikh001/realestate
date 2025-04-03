@@ -22,7 +22,7 @@ interface PropertyData {
 }
 const fetchPropertyData = async (propertyId: string): Promise<PropertyData | null> => {
   try {
-    const res = await fetch(`https://apimobile-6zp8.onrender.com/api/properties/${propertyId}`)
+    const res = await fetch(`https://api.realestatecompany.co.in/api/properties/${propertyId}`)
     if (!res.ok) throw new Error("Failed to fetch property data")
     return await res.json() as PropertyData
   } catch (error) {

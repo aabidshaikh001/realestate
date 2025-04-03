@@ -17,9 +17,8 @@ import {
   SheetClose,
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
 
-// Import the Property interface and PropertyCard component from your home page
-// or create a shared types file for better organization
 interface Property {
   id: string
   title: string
@@ -32,6 +31,7 @@ interface Property {
   discount: string
   visitBonus: string
   bhkOptions: string[]
+  propertyType?: string
 }
 
 interface FilterOptions {
@@ -40,6 +40,7 @@ interface FilterOptions {
   readyToMove: boolean
   locations: string[]
   brokerages: string[]
+  propertyTypes: string[]
 }
 
 function SearchResultsPage({ params }: { params: { search: string } }) {
@@ -60,6 +61,7 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
     readyToMove: false,
     locations: [],
     brokerages: [],
+    propertyTypes: [],
   })
 
   const [availableFilters, setAvailableFilters] = useState({
@@ -67,9 +69,35 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
     minPrice: 0,
     locations: [] as string[],
     brokerages: [] as string[],
+    propertyTypes: [] as string[],
   })
 
   const [activeFiltersCount, setActiveFiltersCount] = useState(0)
+
+  // Set initial property types based on category search
+  useEffect(() => {
+    if (searchQuery === "flat-apartment") {
+      setFilters((prev) => ({
+        ...prev,
+        propertyTypes: ["flat", "apartment"],
+      }))
+    } else if (searchQuery === "farmhouse-villa") {
+      setFilters((prev) => ({
+        ...prev,
+        propertyTypes: ["farmhouse", "villa"],
+      }))
+    } else if (searchQuery === "plots-land") {
+      setFilters((prev) => ({
+        ...prev,
+        propertyTypes: ["plot", "land"],
+      }))
+    } else if (searchQuery === "commercial") {
+      setFilters((prev) => ({
+        ...prev,
+        propertyTypes: ["commercial"],
+      }))
+    }
+  }, [searchQuery, availableFilters.maxPrice, availableFilters.minPrice])
 
   // Fetch properties based on search query and filters
   useEffect(() => {
@@ -104,9 +132,13 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
           queryParams.set("brokerages", filters.brokerages.join(","))
         }
 
+        if (filters.propertyTypes.length > 0) {
+          queryParams.set("propertyTypes", filters.propertyTypes.join(","))
+        }
+
         // Replace with your actual API endpoint that supports search and filters
         const response = await fetch(
-          `https://apimobile-6zp8.onrender.com/api/properties?search=${encodeURIComponent(searchQuery)}&${queryParams.toString()}`,
+          `https://api.realestatecompany.co.in/api/properties?search=${encodeURIComponent(searchQuery)}&${queryParams.toString()}`,
           {
             cache: "no-store", // Don't cache search results
           },
@@ -116,19 +148,32 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
           throw new Error(`Failed to fetch: ${response.status}`)
         }
 
-        const data = await response.json()
+        let data = await response.json()
+
+        // If the API doesn't support propertyType filtering, do it client-side
+        if (filters.propertyTypes.length > 0) {
+          data = data.filter(
+            (property: Property) =>
+              property.propertyType && filters.propertyTypes.includes(property.propertyType.toLowerCase()),
+          )
+        }
+
         setProperties(data)
 
         // Extract available filter options from the data
         if (data.length > 0) {
-          const locations: string[] = Array.from(new Set(data.map((p: Property) => p.location)));
-          const brokerages: string[] = Array.from(new Set(data.map((p: Property) => p.brokerage)));
-          
+          const locations: string[] = Array.from(new Set(data.map((p: Property) => p.location)))
+          const brokerages: string[] = Array.from(new Set(data.map((p: Property) => p.brokerage)))
+          const propertyTypes: string[] = Array.from(
+            new Set(data.map((p: Property) => p.propertyType?.toLowerCase()).filter(Boolean)),
+          )
+
           const prices = data.map((p: Property) => Number.parseInt(p.price.replace(/[^\d]/g, "")))
 
           setAvailableFilters({
             locations,
             brokerages,
+            propertyTypes,
             minPrice: Math.min(...prices),
             maxPrice: Math.max(...prices),
           })
@@ -164,6 +209,7 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
     if (filters.readyToMove) count++
     if (filters.locations.length > 0) count++
     if (filters.brokerages.length > 0) count++
+    if (filters.propertyTypes.length > 0) count++
 
     setActiveFiltersCount(count)
   }, [filters, availableFilters])
@@ -179,6 +225,7 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
     queryParams.delete("readyToMove")
     queryParams.delete("locations")
     queryParams.delete("brokerages")
+    queryParams.delete("propertyTypes")
 
     // Add new filter params
     if (filters.priceRange[0] > availableFilters.minPrice) {
@@ -205,21 +252,38 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
       queryParams.set("brokerages", filters.brokerages.join(","))
     }
 
+    if (filters.propertyTypes.length > 0) {
+      queryParams.set("propertyTypes", filters.propertyTypes.join(","))
+    }
+
     // Update the URL with filters
     router.push(`/Properties/${params.search}?${queryParams.toString()}`)
   }
 
   // Reset all filters
   const resetFilters = () => {
+    // Keep property type filters for category pages
+    const propertyTypes =
+      searchQuery === "flat-apartment"
+        ? ["flat", "apartment"]
+        : searchQuery === "farmhouse-villa"
+          ? ["farmhouse", "villa"]
+          : searchQuery === "plots-land"
+            ? ["plot", "land"]
+            : searchQuery === "commercial"
+              ? ["commercial"]
+              : []
+
     setFilters({
       priceRange: [availableFilters.minPrice, availableFilters.maxPrice],
       bhkTypes: [],
       readyToMove: false,
       locations: [],
       brokerages: [],
+      propertyTypes: propertyTypes,
     })
 
-    // Remove filter params from URL
+    // Remove filter params from URL except for category-specific property types
     router.push(`/Properties/${params.search}`)
   }
 
@@ -274,6 +338,23 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
     })
   }
 
+  // Toggle property type selection
+  const togglePropertyType = (propertyType: string) => {
+    setFilters((prev) => {
+      if (prev.propertyTypes.includes(propertyType)) {
+        return {
+          ...prev,
+          propertyTypes: prev.propertyTypes.filter((type) => type !== propertyType),
+        }
+      } else {
+        return {
+          ...prev,
+          propertyTypes: [...prev.propertyTypes, propertyType],
+        }
+      }
+    })
+  }
+
   // Format price for display
   const formatPrice = (price: number) => {
     if (price >= 10000000) {
@@ -283,6 +364,15 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
     } else {
       return `₹${price.toLocaleString()}`
     }
+  }
+
+  // Get display title based on search query
+  const getDisplayTitle = () => {
+    if (searchQuery === "flat-apartment") return "Flats & Apartments"
+    if (searchQuery === "farmhouse-villa") return "Farmhouses & Villas"
+    if (searchQuery === "plots-land") return "Plots & Lands"
+    if (searchQuery === "commercial") return "Commercial Properties"
+    return `Search Results: ${searchQuery}`
   }
 
   return (
@@ -295,7 +385,7 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold">Search Results: {searchQuery}</h1>
+            <h1 className="text-xl font-semibold">{getDisplayTitle()}</h1>
           </div>
 
           <Sheet>
@@ -369,6 +459,31 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
                     Ready to Move
                   </label>
                 </div>
+
+                {/* Property Type Filter - Only show if not on a category page */}
+                {!["flat-apartment", "farmhouse-villa", "plots-land", "commercial"].includes(searchQuery) &&
+                  availableFilters.propertyTypes.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-medium text-sm">Property Type</h3>
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                        {availableFilters.propertyTypes.map((propertyType) => (
+                          <div key={propertyType} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`property-type-${propertyType}`}
+                              checked={filters.propertyTypes.includes(propertyType)}
+                              onCheckedChange={() => togglePropertyType(propertyType)}
+                            />
+                            <label
+                              htmlFor={`property-type-${propertyType}`}
+                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 {/* Location Filter */}
                 {availableFilters.locations.length > 0 && (
@@ -472,6 +587,15 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
               </Badge>
             )}
 
+            {/* Only show property type badges if not on a category page */}
+            {!["flat-apartment", "farmhouse-villa", "plots-land", "commercial"].includes(searchQuery) &&
+              filters.propertyTypes.map((propertyType) => (
+                <Badge key={propertyType} variant="secondary" className="flex items-center gap-1">
+                  {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => togglePropertyType(propertyType)} />
+                </Badge>
+              ))}
+
             {filters.locations.map((location) => (
               <Badge key={location} variant="secondary" className="flex items-center gap-1">
                 {location}
@@ -498,7 +622,7 @@ function SearchResultsPage({ params }: { params: { search: string } }) {
           <div className="text-center py-12">
             <h2 className="text-2xl font-semibold mb-2">No properties found</h2>
             <p className="text-gray-500 mb-6">
-              We couldn&apos;t find any properties matching &quot;{searchQuery}&quot;
+              We couldn&apos;t find any properties matching &quot;{getDisplayTitle()}&quot;
               {activeFiltersCount > 0 && " with the selected filters"}
             </p>
             <div className="flex justify-center gap-4">
@@ -554,19 +678,20 @@ function SearchResultsSkeleton() {
   )
 }
 
-// Import the PropertyCard component from your home page or create a shared component
+// Property Card Component
 function PropertyCard({ property }: { property: Property }) {
   const bhkOptions = typeof property.bhkOptions === "string" ? JSON.parse(property.bhkOptions) : property.bhkOptions
-
   const imagesArray: string[] = Array.isArray(property.images) ? property.images : JSON.parse(property.images || "[]")
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
       <div className="relative">
         {imagesArray.length > 0 ? (
-          <img
-            src={imagesArray[0] || "/placeholder.svg"} // Display the first image
+          <Image
+            src={imagesArray[0] || "/placeholder.svg"}
             alt={property.title}
+            width={400}
+            height={200}
             className="w-full h-[180px] object-cover"
           />
         ) : (
@@ -635,7 +760,7 @@ function PropertyCard({ property }: { property: Property }) {
               <p className="text-xs text-gray-500 mt-1">{property.discount}</p>
             </div>
             <div>
-              <Link href={`/Properties/${property.id}`}>
+              <Link href={`/property/${property.id}`}>
                 <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">Book Visit</Button>
               </Link>
             </div>
